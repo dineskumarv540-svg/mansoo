@@ -228,6 +228,18 @@ export default function HomeScreen({ navigation }) {
     );
   };
 
+  const keyExtractor = useCallback((item) => item.id, []);
+
+  const renderPostItem = useCallback(({ item }) => (
+    <PostCard
+      post={item}
+      onLikeClick={handleOptimisticLike}
+      onOptionsPress={handleOptionsPress}
+      onCommentPress={handleCommentPress}
+      onSharePress={(p) => Alert.alert('Share', `Share post ${p.id}`)}
+    />
+  ), []);
+
   if (initialLoading) {
     return (
       <SafeAreaView style={styles.container}>
@@ -262,16 +274,8 @@ export default function HomeScreen({ navigation }) {
       {/* Main Scrollable Feed with Infinite Scroll & Pull-to-Refresh */}
       <FlatList
         data={posts}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <PostCard
-            post={item}
-            onLikeClick={() => handleOptimisticLike(item)}
-            onOptionsPress={handleOptionsPress}
-            onCommentPress={handleCommentPress}
-            onSharePress={(p) => Alert.alert('Share', `Share post ${p.id}`)}
-          />
-        )}
+        keyExtractor={keyExtractor}
+        renderItem={renderPostItem}
         ListHeaderComponent={renderHeader}
         ListFooterComponent={renderFooter}
         showsVerticalScrollIndicator={false}

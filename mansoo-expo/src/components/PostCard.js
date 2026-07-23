@@ -6,7 +6,7 @@ import AnimatedHeart from './AnimatedHeart';
 import { COLORS } from '../theme/colors';
 import { togglePostLikeInFirestore } from '../services/firebaseDb';
 
-export default function PostCard({ post, onLikeClick, onOptionsPress, onCommentPress, onSharePress }) {
+const PostCard = React.memo(function PostCard({ post, onLikeClick, onOptionsPress, onCommentPress, onSharePress }) {
   const [isLiked, setIsLiked] = useState(post.isLiked || false);
   const [likesCount, setLikesCount] = useState(post.likesCount || 0);
   const [isSaved, setIsSaved] = useState(post.isSaved || false);
@@ -215,9 +215,6 @@ const styles = StyleSheet.create({
     color: COLORS.textSecondary,
     marginTop: 4,
   },
-  commentPreviewText: {
-    fontSize: 12,
-    color: COLORS.textPrimary,
-    marginTop: 2,
-  },
 });
+
+export default PostCard;

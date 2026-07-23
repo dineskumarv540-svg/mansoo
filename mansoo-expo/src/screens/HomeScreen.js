@@ -27,6 +27,9 @@ import { getCachedFeed, updateCachedFeed, updatePostInCache } from '../services/
 import { getTodayChallenge } from '../services/challengeService';
 import { COLORS } from '../theme/colors';
 
+import { sharePost, blockUser, submitReport } from '../services/socialService';
+import { triggerNotification } from '../services/notificationService';
+
 export default function HomeScreen({ navigation }) {
   const [posts, setPosts] = useState(getCachedFeed());
   const [initialLoading, setInitialLoading] = useState(false);
@@ -86,7 +89,7 @@ export default function HomeScreen({ navigation }) {
     setLoadingMore(false);
   };
 
-  // Optimistic UI Like Handler
+  // Optimistic UI Like Handler with Notification Trigger
   const handleOptimisticLike = (targetPost) => {
     const nextLiked = !targetPost.isLiked;
     const nextCount = targetPost.likesCount + (nextLiked ? 1 : -1);
@@ -99,6 +102,19 @@ export default function HomeScreen({ navigation }) {
 
     // 2. Background Firestore sync
     togglePostLikeInFirestore(targetPost.id, 'u1', nextLiked);
+
+    // 3. Trigger Notification
+    if (nextLiked) {
+      triggerNotification({
+        recipientId: targetPost.authorId,
+        senderId: 'u1',
+        senderName: 'Aarav Sharma',
+        senderAvatarUrl: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=400',
+        type: 'like',
+        actionText: `liked your post: "${targetPost.quoteText.slice(0, 30)}..."`,
+        postId: targetPost.id,
+      });
+    }
   };
 
   const handleOptionsPress = (post) => {
@@ -111,10 +127,40 @@ export default function HomeScreen({ navigation }) {
     setCommentsVisible(true);
   };
 
-  const handleOptionSelect = (action) => {
-    if (action === 'Edit Post' && selectedPost) {
+  const handleOptionSelect = async (action) => {
+    if (!selectedPost) return;
+
+    if (action === 'Share to Story' || action === 'Copy Link') {
+      await sharePost(selectedPost);
+      Alert.alert('Shared! ✨', `${action} completed.`);
+    } else if (action === 'Block User') {
+      Alert.alert(
+        'Block User',
+        `Are you sure you want to block ${selectedPost.authorName}? You won't see their posts anymore.`,
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Block',
+            style: 'destructive',
+            onPress: async () => {
+              await blockUser('u1', selectedPost.authorId, selectedPost.authorName);
+              setPosts(prev => prev.filter(p => p.authorId !== selectedPost.authorId));
+              Alert.alert('Blocked', `${selectedPost.authorName} has been blocked.`);
+            }
+          }
+        ]
+      );
+    } else if (action === 'Report Post') {
+      const res = await submitReport({
+        contentId: selectedPost.id,
+        contentType: 'post',
+        reportedByUserId: 'u1',
+        reason: 'Inappropriate Content',
+      });
+      Alert.alert('Report Submitted', res.message);
+    } else if (action === 'Edit Post') {
       navigation.navigate('Create', { editPost: selectedPost });
-    } else if (action === 'Delete Post' && selectedPost) {
+    } else if (action === 'Delete Post') {
       Alert.alert(
         'Delete Post',
         'Are you sure you want to permanently delete this post?',

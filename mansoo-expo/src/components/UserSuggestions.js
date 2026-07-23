@@ -2,12 +2,28 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS } from '../theme/colors';
+import { toggleUserFollowInFirestore } from '../services/firebaseDb';
+import { triggerNotification } from '../services/notificationService';
 
 export default function UserSuggestions({ users = [] }) {
   const [followingMap, setFollowingMap] = useState({});
 
-  const toggleFollow = (id) => {
-    setFollowingMap(prev => ({ ...prev, [id]: !prev[id] }));
+  const toggleFollow = (user) => {
+    const nextState = !followingMap[user.id];
+    setFollowingMap(prev => ({ ...prev, [user.id]: nextState }));
+
+    toggleUserFollowInFirestore(user.id, 'u1', nextState);
+
+    if (nextState) {
+      triggerNotification({
+        recipientId: user.id,
+        senderId: 'u1',
+        senderName: 'Aarav Sharma',
+        senderAvatarUrl: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=400',
+        type: 'follow',
+        actionText: 'started following you.',
+      });
+    }
   };
 
   if (!users || users.length === 0) return null;
@@ -48,7 +64,7 @@ export default function UserSuggestions({ users = [] }) {
 
               <TouchableOpacity
                 style={[styles.followBtn, isFollowing && styles.followingBtn]}
-                onPress={() => toggleFollow(user.id)}
+                onPress={() => toggleFollow(user)}
                 activeOpacity={0.8}
               >
                 <Text style={[styles.followBtnText, isFollowing && styles.followingBtnText]}>

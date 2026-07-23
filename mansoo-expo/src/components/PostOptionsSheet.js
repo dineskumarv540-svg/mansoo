@@ -129,14 +129,27 @@ export default function PostOptionsSheet({ visible, post, onClose, onOptionSelec
 
               <TouchableOpacity
                 style={styles.optionRow}
-                onPress={() => handleOption('Delete Post')}
+                onPress={() => handleOption('Block User')}
               >
-                <View style={[styles.iconBox, { backgroundColor: '#FFEBEE' }]}>
-                  <Ionicons name="trash-outline" size={20} color={COLORS.error} />
+                <View style={[styles.iconBox, { backgroundColor: '#FFF3E0' }]}>
+                  <Ionicons name="hand-left-outline" size={20} color="#E65100" />
                 </View>
                 <View style={styles.optionTextContainer}>
-                  <Text style={[styles.optionLabel, { color: COLORS.error }]}>Delete Post</Text>
-                  <Text style={[styles.optionSublabel, { color: COLORS.error }]}>Permanently remove this post</Text>
+                  <Text style={[styles.optionLabel, { color: '#E65100' }]}>Block User</Text>
+                  <Text style={[styles.optionSublabel, { color: '#E65100' }]}>Hide all posts from this user</Text>
+                </View>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.optionRow}
+                onPress={() => handleOption('Report Post')}
+              >
+                <View style={[styles.iconBox, { backgroundColor: '#FFEBEE' }]}>
+                  <Ionicons name="alert-circle-outline" size={20} color={COLORS.error} />
+                </View>
+                <View style={styles.optionTextContainer}>
+                  <Text style={[styles.optionLabel, { color: COLORS.error }]}>Report Post</Text>
+                  <Text style={[styles.optionSublabel, { color: COLORS.error }]}>Flag inappropriate content</Text>
                 </View>
               </TouchableOpacity>
 

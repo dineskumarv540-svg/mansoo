@@ -13,7 +13,7 @@ import {
   TouchableWithoutFeedback
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { COLORS } from '../theme/colors';
+import { triggerNotification } from '../services/notificationService';
 
 const SAMPLE_COMMENTS = [
   {
@@ -24,6 +24,9 @@ const SAMPLE_COMMENTS = [
     time: '25m ago',
     likesCount: 14,
     isLiked: true,
+    replies: [
+      { id: 'r1', userName: 'Aarav Sharma', text: 'Thank you Priya! Means a lot 🙏', time: '10m ago' }
+    ]
   },
   {
     id: 'c2',
@@ -33,38 +36,75 @@ const SAMPLE_COMMENTS = [
     time: '1h ago',
     likesCount: 8,
     isLiked: false,
-  },
-  {
-    id: 'c3',
-    userName: 'Ananya Roy',
-    userAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200',
-    text: 'So relatable and beautifully composed ❤️',
-    time: '3h ago',
-    likesCount: 22,
-    isLiked: true,
+    replies: []
   },
 ];
 
 export default function CommentsModal({ visible, post, onClose }) {
   const [comments, setComments] = useState(SAMPLE_COMMENTS);
   const [newCommentText, setNewCommentText] = useState('');
+  const [replyingToComment, setReplyingToComment] = useState(null);
 
   if (!visible) return null;
 
   const handleAddComment = () => {
     if (!newCommentText.trim()) return;
 
-    const newComment = {
-      id: 'c_' + Date.now(),
-      userName: 'Aarav Sharma',
-      userAvatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200',
-      text: newCommentText.trim(),
-      time: 'Just now',
-      likesCount: 0,
-      isLiked: false,
-    };
+    if (replyingToComment) {
+      // Add nested reply to target comment
+      const replyObj = {
+        id: 'r_' + Date.now(),
+        userName: 'Aarav Sharma',
+        text: newCommentText.trim(),
+        time: 'Just now',
+      };
 
-    setComments(prev => [newComment, ...prev]);
+      setComments(prev => prev.map(c => {
+        if (c.id === replyingToComment.id) {
+          return { ...c, replies: [...(c.replies || []), replyObj] };
+        }
+        return c;
+      }));
+
+      // Trigger notification for comment author
+      triggerNotification({
+        recipientId: replyingToComment.userId || 'u2',
+        senderId: 'u1',
+        senderName: 'Aarav Sharma',
+        senderAvatarUrl: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200',
+        type: 'comment',
+        actionText: `replied to your comment: "${newCommentText.trim()}"`,
+        postId: post?.id || '',
+      });
+
+      setReplyingToComment(null);
+    } else {
+      // Add top-level comment
+      const newComment = {
+        id: 'c_' + Date.now(),
+        userName: 'Aarav Sharma',
+        userAvatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200',
+        text: newCommentText.trim(),
+        time: 'Just now',
+        likesCount: 0,
+        isLiked: false,
+        replies: []
+      };
+
+      setComments(prev => [newComment, ...prev]);
+
+      // Trigger notification for post author
+      triggerNotification({
+        recipientId: post?.authorId || 'u2',
+        senderId: 'u1',
+        senderName: 'Aarav Sharma',
+        senderAvatarUrl: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200',
+        type: 'comment',
+        actionText: `commented: "${newCommentText.trim()}"`,
+        postId: post?.id || '',
+      });
+    }
+
     setNewCommentText('');
   };
 

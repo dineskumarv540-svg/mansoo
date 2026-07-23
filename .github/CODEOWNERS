@@ -1,0 +1,5 @@
+# CODEOWNERS for Mansoo Repo
+
+* @dineskumarv540-svg
+/docs/ @dineskumarv540-svg
+/mansoo-expo/src/services/ @dineskumarv540-svg

@@ -18,6 +18,7 @@ import EditProfileModal from '../components/EditProfileModal';
 import SettingsModal from '../components/SettingsModal';
 import QRCodeModal from '../components/QRCodeModal';
 import ShareSheetModal from '../components/ShareSheetModal';
+import DeleteAccountModal from '../components/DeleteAccountModal';
 
 import { DUMMY_POSTS, DUMMY_USERS } from '../data/dummyData';
 import { COLORS } from '../theme/colors';
@@ -29,6 +30,7 @@ export default function ProfileScreen({ navigation }) {
   const [settingsModalVisible, setSettingsModalVisible] = useState(false);
   const [qrModalVisible, setQrModalVisible] = useState(false);
   const [shareProfileVisible, setShareProfileVisible] = useState(false);
+  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
 
   const { user, logout, deleteAccount } = useAuth();
   const initialUser = user || DUMMY_USERS[0];
@@ -243,8 +245,14 @@ export default function ProfileScreen({ navigation }) {
       <SettingsModal
         visible={settingsModalVisible}
         onClose={() => setSettingsModalVisible(false)}
-        onLogout={handleLogout}
-        onDeleteAccount={handleDeleteAccount}
+        onLogout={logout}
+        onDeleteAccount={() => setDeleteModalVisible(true)}
+        navigation={navigation}
+      />
+
+      <DeleteAccountModal
+        visible={deleteModalVisible}
+        onClose={() => setDeleteModalVisible(false)}
       />
 
       <QRCodeModal

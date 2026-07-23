@@ -165,6 +165,24 @@ export default function ExploreScreen({ navigation }) {
           </View>
         )}
 
+        {/* Writing Rooms Banner */}
+        <TouchableOpacity
+          activeOpacity={0.85}
+          onPress={() => navigation.navigate('WritingRooms')}
+          style={{ marginBottom: 16 }}
+        >
+          <LinearGradient colors={COLORS.gradientGreen} style={{ borderRadius: 16, padding: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+            <View style={{ flex: 1 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
+                <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: '#E53935', marginRight: 6 }} />
+                <Text style={{ color: '#FFFFFF', fontSize: 16, fontWeight: 'bold' }}>Live Writing Rooms 🎙️</Text>
+              </View>
+              <Text style={{ color: '#E0F2F1', fontSize: 12 }}>Join writers live, write to prompts, & get real-time feedback</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={24} color="#FFFFFF" />
+          </LinearGradient>
+        </TouchableOpacity>
+
         {/* 4. Hashtags Selector Bar */}
         {(activeTab === 'all' || activeTab === 'hashtags') && (
           <View style={styles.section}>

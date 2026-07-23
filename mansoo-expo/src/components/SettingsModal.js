@@ -14,7 +14,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { COLORS } from '../theme/colors';
 import { useAppTheme } from '../theme/ThemeContext';
 
-export default function SettingsModal({ visible, onClose, onLogout, onDeleteAccount }) {
+export default function SettingsModal({ visible, onClose, onLogout, onDeleteAccount, navigation, onOpenSupport }) {
   const { isDarkMode, toggleTheme } = useAppTheme();
 
   if (!visible) return null;
@@ -78,6 +78,71 @@ export default function SettingsModal({ visible, onClose, onLogout, onDeleteAcco
                     <Text style={styles.rowText}>Reset Onboarding Tutorial</Text>
                   </View>
                   <Ionicons name="reload" size={16} color={COLORS.primary} />
+                </TouchableOpacity>
+
+                <View style={styles.divider} />
+
+                {/* Legal Section Header */}
+                <Text style={styles.sectionHeader}>Legal & Guidelines</Text>
+
+                {/* Privacy Policy */}
+                <TouchableOpacity
+                  style={styles.row}
+                  onPress={() => {
+                    onClose();
+                    if (navigation) navigation.navigate('PrivacyPolicy');
+                  }}
+                >
+                  <View style={styles.rowLeft}>
+                    <Ionicons name="shield-checkmark-outline" size={20} color={COLORS.primary} style={styles.rowIcon} />
+                    <Text style={styles.rowText}>Privacy Policy</Text>
+                  </View>
+                  <Ionicons name="chevron-forward" size={16} color="#AAAAAA" />
+                </TouchableOpacity>
+
+                {/* Terms & Conditions */}
+                <TouchableOpacity
+                  style={styles.row}
+                  onPress={() => {
+                    onClose();
+                    if (navigation) navigation.navigate('TermsConditions');
+                  }}
+                >
+                  <View style={styles.rowLeft}>
+                    <Ionicons name="document-text-outline" size={20} color={COLORS.primary} style={styles.rowIcon} />
+                    <Text style={styles.rowText}>Terms & Conditions</Text>
+                  </View>
+                  <Ionicons name="chevron-forward" size={16} color="#AAAAAA" />
+                </TouchableOpacity>
+
+                {/* Community Guidelines */}
+                <TouchableOpacity
+                  style={styles.row}
+                  onPress={() => {
+                    onClose();
+                    if (navigation) navigation.navigate('CommunityGuidelines');
+                  }}
+                >
+                  <View style={styles.rowLeft}>
+                    <Ionicons name="people-outline" size={20} color={COLORS.primary} style={styles.rowIcon} />
+                    <Text style={styles.rowText}>Community Guidelines</Text>
+                  </View>
+                  <Ionicons name="chevron-forward" size={16} color="#AAAAAA" />
+                </TouchableOpacity>
+
+                {/* Help Center & Support */}
+                <TouchableOpacity
+                  style={styles.row}
+                  onPress={() => {
+                    onClose();
+                    if (onOpenSupport) onOpenSupport();
+                  }}
+                >
+                  <View style={styles.rowLeft}>
+                    <Ionicons name="help-buoy-outline" size={20} color={COLORS.primary} style={styles.rowIcon} />
+                    <Text style={styles.rowText}>Help Center & Support</Text>
+                  </View>
+                  <Ionicons name="chevron-forward" size={16} color="#AAAAAA" />
                 </TouchableOpacity>
 
                 <View style={styles.divider} />
@@ -154,7 +219,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: 14,
+    paddingVertical: 12,
   },
   rowLeft: {
     flexDirection: 'row',
@@ -167,6 +232,15 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '600',
     color: COLORS.textPrimary,
+  },
+  sectionHeader: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: COLORS.textSecondary,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+    marginTop: 8,
+    marginBottom: 6,
   },
   divider: {
     height: 1,

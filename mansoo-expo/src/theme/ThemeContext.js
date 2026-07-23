@@ -1,36 +1,23 @@
 // Theme Context Provider supporting Light and Dark modes dynamically
 import React, { createContext, useContext, useState } from 'react';
 import { useColorScheme } from 'react-native';
-
-const LIGHT_THEME = {
-  isDark: false,
-  colors: {
-    primary: '#0F3D3E',
-    accent: '#F26B8A',
-    background: '#FFFFFF',
-    cardBackground: '#FFFFFF',
-    textPrimary: '#222222',
-    textSecondary: '#888888',
-    border: '#F0F0F0',
-  }
-};
-
-const DARK_THEME = {
-  isDark: true,
-  colors: {
-    primary: '#11998E',
-    accent: '#F26B8A',
-    background: '#121212',
-    cardBackground: '#1E1E1E',
-    textPrimary: '#F0F0F0',
-    textSecondary: '#AAAAAA',
-    border: '#2C2C2C',
-  }
-};
+import {
+  LIGHT_PALETTE,
+  DARK_PALETTE,
+  SPACING,
+  RADIUS,
+  TYPOGRAPHY_SCALE,
+  SHADOWS
+} from './tokens';
 
 const ThemeContext = createContext({
-  theme: LIGHT_THEME,
+  theme: LIGHT_PALETTE,
+  isDarkMode: false,
   toggleTheme: () => {},
+  spacing: SPACING,
+  radius: RADIUS,
+  typography: TYPOGRAPHY_SCALE,
+  shadows: SHADOWS,
 });
 
 export const ThemeProvider = ({ children }) => {
@@ -41,10 +28,21 @@ export const ThemeProvider = ({ children }) => {
     setIsDarkMode(prev => !prev);
   };
 
-  const theme = isDarkMode ? DARK_THEME : LIGHT_THEME;
+  const theme = isDarkMode ? DARK_PALETTE : LIGHT_PALETTE;
 
   return (
-    <ThemeContext.Provider value={{ theme, isDarkMode, toggleTheme }}>
+    <ThemeContext.Provider
+      value={{
+        theme,
+        colors: theme,
+        isDarkMode,
+        toggleTheme,
+        spacing: SPACING,
+        radius: RADIUS,
+        typography: TYPOGRAPHY_SCALE,
+        shadows: SHADOWS,
+      }}
+    >
       {children}
     </ThemeContext.Provider>
   );

@@ -1,0 +1,124 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Mansoo – The Voice of Heart API Specification",
+    "description": "Enterprise OpenAPI 3.1 Specification for Mansoo Backend Services, Firebase Auth, Firestore Data Access Layer, and Callable Cloud Functions.",
+    "version": "1.0.0",
+    "contact": {
+      "name": "Mansoo Engineering Team",
+      "email": "api@mansoo.in",
+      "url": "https://mansoo.in"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://us-central1-mansoo-app.cloudfunctions.net",
+      "description": "Production Firebase Cloud Functions Environment"
+    }
+  ],
+  "security": [
+    {
+      "FirebaseAuthBearer": []
+    }
+  ],
+  "paths": {
+    "/createPost": {
+      "post": {
+        "summary": "Publish New Post",
+        "description": "Callable Cloud Function to validate, moderate, rate-limit, and publish a new quote/poem post.",
+        "operationId": "createPost",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePostRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Post created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreatePostResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated request"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          }
+        }
+      }
+    },
+    "/reportContent": {
+      "post": {
+        "summary": "Submit Abuse Report",
+        "description": "Submit a report against inappropriate posts, comments, or user profiles for moderator audit.",
+        "operationId": "reportContent",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReportContentRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Report logged successfully"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "FirebaseAuthBearer": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "Firebase ID Token passed in Authorization header."
+      }
+    },
+    "schemas": {
+      "CreatePostRequest": {
+        "type": "object",
+        "required": ["quoteText", "category"],
+        "properties": {
+          "quoteText": { "type": "string", "minLength": 1, "maxLength": 5000 },
+          "category": { "type": "string", "enum": ["Poem", "Shayari", "Quotes", "Story", "Life", "Meme"] },
+          "backgroundImageUrl": { "type": "string" },
+          "backgroundColor": { "type": "string" },
+          "fontStyle": { "type": "string" },
+          "textColor": { "type": "string" }
+        }
+      },
+      "CreatePostResponse": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "success": { "type": "boolean" }
+        }
+      },
+      "ReportContentRequest": {
+        "type": "object",
+        "required": ["contentId", "contentType", "reason"],
+        "properties": {
+          "contentId": { "type": "string" },
+          "contentType": { "type": "string", "enum": ["post", "comment", "user"] },
+          "reason": { "type": "string" },
+          "details": { "type": "string" }
+        }
+      }
+    }
+  }
+}

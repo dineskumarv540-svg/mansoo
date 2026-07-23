@@ -12,6 +12,11 @@ import DraftsScreen from '../screens/DraftsScreen';
 import AnalyticsScreen from '../screens/AnalyticsScreen';
 import GamificationScreen from '../screens/GamificationScreen';
 import PremiumScreen from '../screens/PremiumScreen';
+import PrivacyPolicyScreen from '../screens/PrivacyPolicyScreen';
+import TermsConditionsScreen from '../screens/TermsConditionsScreen';
+import CommunityGuidelinesScreen from '../screens/CommunityGuidelinesScreen';
+import WritingRoomsScreen from '../screens/WritingRoomsScreen';
+import WritingRoomDetailScreen from '../screens/WritingRoomDetailScreen';
 import { AuthProvider } from '../context/AuthContext';
 
 const Stack = createNativeStackNavigator();
@@ -37,6 +42,11 @@ export default function AppNavigator() {
           <Stack.Screen name="Analytics" component={AnalyticsScreen} />
           <Stack.Screen name="Gamification" component={GamificationScreen} />
           <Stack.Screen name="Premium" component={PremiumScreen} />
+          <Stack.Screen name="PrivacyPolicy" component={PrivacyPolicyScreen} />
+          <Stack.Screen name="TermsConditions" component={TermsConditionsScreen} />
+          <Stack.Screen name="CommunityGuidelines" component={CommunityGuidelinesScreen} />
+          <Stack.Screen name="WritingRooms" component={WritingRoomsScreen} />
+          <Stack.Screen name="WritingRoomDetail" component={WritingRoomDetailScreen} />
         </Stack.Navigator>
       </NavigationContainer>
     </AuthProvider>

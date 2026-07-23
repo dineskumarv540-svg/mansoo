@@ -167,6 +167,13 @@ export default function SignUpScreen({ navigation }) {
                 )}
               </LinearGradient>
             </TouchableOpacity>
+            {/* Terms Notice */}
+            <Text style={styles.termsNotice}>
+              By signing up, you agree to our{' '}
+              <Text style={styles.termsLink} onPress={() => navigation.navigate('TermsConditions')}>Terms & Conditions</Text>
+              {' '}and{' '}
+              <Text style={styles.termsLink} onPress={() => navigation.navigate('PrivacyPolicy')}>Privacy Policy</Text>.
+            </Text>
           </View>
 
           {/* Footer Row */}
@@ -294,6 +301,18 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  termsNotice: {
+    fontSize: 11,
+    color: COLORS.textSecondary,
+    textAlign: 'center',
+    marginTop: 14,
+    lineHeight: 16,
+  },
+  termsLink: {
+    fontWeight: 'bold',
+    color: COLORS.primary,
+    textDecorationLine: 'underline',
   },
   footerRow: {
     flexDirection: 'row',

@@ -18,6 +18,7 @@ import {
 import { auth, db } from '../../firebase';
 import { DUMMY_POSTS, DUMMY_USERS, DUMMY_STORIES } from '../data/dummyData';
 import { calculateTrendingScore } from './trendingAlgorithm';
+import { createPost } from '../services/cloudFunctions';
 
 // Collection references
 const POSTS_COLLECTION = 'posts';
@@ -60,26 +61,12 @@ export async function fetchPostsFeed(lastVisibleDoc = null, pageSize = 10) {
  */
 export async function createPostInFirestore(postData) {
   try {
-    const newPost = {
-      ...postData,
-      createdAtTimestamp: Date.now(),
-      serverTimestamp: serverTimestamp(),
-      likesCount: 0,
-      commentsCount: 0,
-      sharesCount: 0,
-      isFeatured: false,
-    };
-
-    const docRef = await addDoc(collection(db, POSTS_COLLECTION), newPost);
-    return { success: true, id: docRef.id, post: { id: docRef.id, ...newPost } };
+    // Cloud Function handles validation, moderation, and secure write
+    const result = await createPost(postData);
+    return { success: true, id: result.id, post: { id: result.id, ...postData } };
   } catch (error) {
-    console.log('[Firestore] Local fallback post creation:', error.message);
-    const mockId = 'p_' + Date.now();
-    return {
-      success: true,
-      id: mockId,
-      post: { id: mockId, ...postData, likesCount: 0, commentsCount: 0 }
-    };
+    console.log('[Firestore] createPost via Cloud Function failed:', error.message);
+    return { success: false, error: error.message };
   }
 }
 

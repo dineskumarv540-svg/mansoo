@@ -1,0 +1,11 @@
+openapi: 3.1.0
+info:
+  title: Mansoo OpenAPI Spec
+  version: 1.0.0
+paths:
+  /createPost:
+    post:
+      summary: Create Post Callable Function
+      responses:
+        '200':
+          description: OK

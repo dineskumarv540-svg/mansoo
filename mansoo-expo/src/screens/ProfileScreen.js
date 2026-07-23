@@ -11,23 +11,49 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
+
 import StaggeredGrid from '../components/StaggeredGrid';
+import EmailVerificationBanner from '../components/EmailVerificationBanner';
+import EditProfileModal from '../components/EditProfileModal';
+import SettingsModal from '../components/SettingsModal';
+
 import { DUMMY_POSTS, DUMMY_USERS } from '../data/dummyData';
 import { COLORS } from '../theme/colors';
-
 import { useAuth } from '../context/AuthContext';
-import EmailVerificationBanner from '../components/EmailVerificationBanner';
 
 export default function ProfileScreen({ navigation }) {
   const [selectedTab, setSelectedTab] = useState(0); // 0: Posts, 1: Saved, 2: Liked
-  const { user, logout, deleteAccount } = useAuth();
-  const displayUser = user || DUMMY_USERS[0];
+  const [editModalVisible, setEditModalVisible] = useState(false);
+  const [settingsModalVisible, setSettingsModalVisible] = useState(false);
 
-  const userPosts = DUMMY_POSTS.filter(p => p.authorId === displayUser.uid || p.authorName === displayUser.name || p.authorName === 'Aarav Sharma');
+  const { user, logout, deleteAccount } = useAuth();
+  const initialUser = user || DUMMY_USERS[0];
+
+  const [profileData, setProfileData] = useState({
+    name: initialUser.displayName || initialUser.name || 'Aarav Sharma',
+    displayName: initialUser.displayName || initialUser.name || 'Aarav Sharma',
+    handle: initialUser.handle || '@aarav_writes',
+    bio: initialUser.bio || 'Poet & Dreamer 🌙 | Author of "Echoes of Silence" | Writing the language of the soul',
+    website: initialUser.website || 'mansoo.in/aarav',
+    avatarUrl: initialUser.photoURL || initialUser.avatarUrl || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=400',
+    coverImageUrl: initialUser.coverImageUrl || 'https://images.unsplash.com/photo-1518837695005-2083093ee35b?w=1200',
+    isVerified: true,
+    isPro: true,
+    followersCount: 14200,
+    followingCount: 312,
+    postsCount: 480,
+  });
+
+  const userPosts = DUMMY_POSTS.filter(p => p.authorId === initialUser.uid || p.authorName === profileData.name || p.authorName === 'Aarav Sharma');
   const savedPosts = DUMMY_POSTS.filter(p => p.isSaved);
   const likedPosts = DUMMY_POSTS.filter(p => p.isLiked);
 
   const currentPosts = selectedTab === 0 ? userPosts : selectedTab === 1 ? savedPosts : likedPosts;
+
+  const handleUpdateProfile = (updatedFields) => {
+    setProfileData(prev => ({ ...prev, ...updatedFields }));
+    Alert.alert('Profile Updated ✨', 'Your profile details have been saved.');
+  };
 
   const handleLogout = () => {
     Alert.alert(
@@ -76,51 +102,56 @@ export default function ProfileScreen({ navigation }) {
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* Cover Photo */}
         <View style={styles.coverContainer}>
-          <Image
-            source={{ uri: 'https://images.unsplash.com/photo-1518837695005-2083093ee35b?w=1200' }}
-            style={styles.coverImage}
-          />
+          <Image source={{ uri: profileData.coverImageUrl }} style={styles.coverImage} />
           <LinearGradient
             colors={['transparent', 'rgba(255,255,255,0.9)', '#FFFFFF']}
             style={styles.coverGradient}
           />
-          {/* Settings / Logout Quick Trigger */}
-          <TouchableOpacity style={styles.settingsBtn} onPress={handleLogout}>
-            <Ionicons name="log-out-outline" size={22} color="#FFFFFF" />
+          {/* Settings Trigger */}
+          <TouchableOpacity style={styles.settingsBtn} onPress={() => setSettingsModalVisible(true)}>
+            <Ionicons name="settings-outline" size={20} color="#FFFFFF" />
           </TouchableOpacity>
         </View>
 
         {/* Profile Info Header */}
         <View style={styles.profileHeader}>
-          {/* Avatar */}
+          {/* Profile Photo Avatar */}
           <LinearGradient colors={COLORS.gradientStory} style={styles.avatarGradient}>
             <View style={styles.avatarWhiteGap}>
-              <Image source={{ uri: displayUser.photoURL || displayUser.avatarUrl }} style={styles.avatar} />
+              <Image source={{ uri: profileData.avatarUrl }} style={styles.avatar} />
             </View>
           </LinearGradient>
 
-          {/* Name & Badge */}
+          {/* Name & Badges */}
           <View style={styles.nameRow}>
-            <Text style={styles.name}>{displayUser.displayName || displayUser.name}</Text>
-            {displayUser.isVerified && (
+            <Text style={styles.name}>{profileData.name}</Text>
+            {profileData.isVerified && (
               <Ionicons name="checkmark-circle" size={18} color={COLORS.verified} style={{ marginLeft: 4 }} />
             )}
-            {displayUser.isPro && (
+            {profileData.isPro && (
               <View style={styles.proBadge}>
                 <Text style={styles.proText}>PRO</Text>
               </View>
             )}
           </View>
 
-          <Text style={styles.handle}>{displayUser.handle || `@${(displayUser.displayName || 'writer').toLowerCase().replace(/\s+/g, '_')}`}</Text>
+          <Text style={styles.handle}>{profileData.handle}</Text>
 
           {/* Bio */}
-          <Text style={styles.bio}>{displayUser.bio || 'Writing the language of the soul ✨'}</Text>
+          <Text style={styles.bio}>{profileData.bio}</Text>
 
-          {/* Stats Row */}
+          {/* Website Link */}
+          {profileData.website ? (
+            <TouchableOpacity style={styles.websiteRow}>
+              <Ionicons name="link-outline" size={14} color={COLORS.primary} />
+              <Text style={styles.websiteText}>{profileData.website}</Text>
+            </TouchableOpacity>
+          ) : null}
+
+          {/* Realtime Counters Stats Row */}
           <View style={styles.statsRow}>
             <View style={styles.statItem}>
-              <Text style={styles.statValue}>{displayUser.postsCount || 480}</Text>
+              <Text style={styles.statValue}>{profileData.postsCount}</Text>
               <Text style={styles.statLabel}>Posts</Text>
             </View>
             <View style={styles.statDivider} />
@@ -130,21 +161,21 @@ export default function ProfileScreen({ navigation }) {
             </View>
             <View style={styles.statDivider} />
             <View style={styles.statItem}>
-              <Text style={styles.statValue}>{displayUser.followingCount || 312}</Text>
+              <Text style={styles.statValue}>{profileData.followingCount}</Text>
               <Text style={styles.statLabel}>Following</Text>
             </View>
           </View>
 
           {/* Action Buttons */}
           <View style={styles.actionsRow}>
-            <TouchableOpacity style={styles.editBtn} onPress={handleLogout}>
-              <Ionicons name="log-out-outline" size={16} color={COLORS.textPrimary} />
-              <Text style={styles.editBtnText}>Log Out</Text>
+            <TouchableOpacity style={styles.editBtn} onPress={() => setEditModalVisible(true)}>
+              <Ionicons name="create-outline" size={16} color={COLORS.textPrimary} />
+              <Text style={styles.editBtnText}>Edit Profile</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.deleteBtn} onPress={handleDeleteAccount}>
-              <Ionicons name="trash-outline" size={16} color={COLORS.error} />
-              <Text style={[styles.editBtnText, { color: COLORS.error }]}>Delete Account</Text>
+            <TouchableOpacity style={styles.settingsActionBtn} onPress={() => setSettingsModalVisible(true)}>
+              <Ionicons name="settings-outline" size={16} color={COLORS.textPrimary} />
+              <Text style={styles.editBtnText}>Settings</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -167,12 +198,27 @@ export default function ProfileScreen({ navigation }) {
           </TouchableOpacity>
         </View>
 
-        {/* Post Grid */}
+        {/* Posts Grid (Reusing StaggeredGrid) */}
         <StaggeredGrid
           posts={currentPosts}
           onItemPress={(p) => Alert.alert('Profile Post', p.quoteText)}
         />
       </ScrollView>
+
+      {/* Modals */}
+      <EditProfileModal
+        visible={editModalVisible}
+        user={profileData}
+        onClose={() => setEditModalVisible(false)}
+        onSave={handleUpdateProfile}
+      />
+
+      <SettingsModal
+        visible={settingsModalVisible}
+        onClose={() => setSettingsModalVisible(false)}
+        onLogout={handleLogout}
+        onDeleteAccount={handleDeleteAccount}
+      />
     </SafeAreaView>
   );
 }
@@ -203,18 +249,6 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.35)',
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  deleteBtn: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#FFF5F5',
-    borderWidth: 1.5,
-    borderColor: '#FFCDD2',
-    borderRadius: 12,
-    paddingVertical: 10,
-    marginLeft: 8,
   },
   profileHeader: {
     alignItems: 'center',
@@ -336,7 +370,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     marginRight: 8,
   },
-  shareBtn: {
+  settingsActionBtn: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',

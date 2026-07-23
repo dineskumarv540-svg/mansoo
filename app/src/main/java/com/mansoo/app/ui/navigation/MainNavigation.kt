@@ -1,5 +1,7 @@
 package com.mansoo.app.ui.navigation
 
+import androidx.compose.animation.*
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -10,6 +12,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
@@ -23,20 +26,60 @@ import com.mansoo.app.ui.screens.categories.CategoryScreen
 import com.mansoo.app.ui.screens.create.CreatePostScreen
 import com.mansoo.app.ui.screens.explore.ExploreScreen
 import com.mansoo.app.ui.screens.home.HomeScreen
+import com.mansoo.app.ui.screens.login.LoginScreen
 import com.mansoo.app.ui.screens.notifications.NotificationsScreen
 import com.mansoo.app.ui.screens.profile.ProfileScreen
 import com.mansoo.app.ui.screens.splash.SplashScreen
+import com.mansoo.app.ui.theme.GradientEnd
+import com.mansoo.app.ui.theme.GradientStart
 import com.mansoo.app.ui.theme.PrimaryPink
 import com.mansoo.app.ui.viewmodel.MainViewModel
 
+// ── Shared slide transition specs ───────────────────────────
+private const val TRANSITION_MS = 300
+
+private val slideEnter: AnimatedContentTransitionScope<*>.() -> EnterTransition = {
+    slideInHorizontally(
+        initialOffsetX = { fullWidth -> fullWidth },
+        animationSpec  = tween(TRANSITION_MS)
+    ) + fadeIn(tween(TRANSITION_MS))
+}
+
+private val slideExit: AnimatedContentTransitionScope<*>.() -> ExitTransition = {
+    slideOutHorizontally(
+        targetOffsetX = { fullWidth -> -fullWidth / 3 },
+        animationSpec = tween(TRANSITION_MS)
+    ) + fadeOut(tween(TRANSITION_MS))
+}
+
+private val slidePopEnter: AnimatedContentTransitionScope<*>.() -> EnterTransition = {
+    slideInHorizontally(
+        initialOffsetX = { fullWidth -> -fullWidth / 3 },
+        animationSpec  = tween(TRANSITION_MS)
+    ) + fadeIn(tween(TRANSITION_MS))
+}
+
+private val slidePopExit: AnimatedContentTransitionScope<*>.() -> ExitTransition = {
+    slideOutHorizontally(
+        targetOffsetX = { fullWidth -> fullWidth },
+        animationSpec = tween(TRANSITION_MS)
+    ) + fadeOut(tween(TRANSITION_MS))
+}
+
+private val fadeExit: AnimatedContentTransitionScope<*>.() -> ExitTransition = {
+    fadeOut(tween(400))
+}
+
+
 sealed class Screen(val route: String, val title: String, val activeIcon: ImageVector, val inactiveIcon: ImageVector) {
-    object Splash : Screen("splash", "Splash", Icons.Filled.Star, Icons.Outlined.Star)
-    object Home : Screen("home", "Home", Icons.Filled.Home, Icons.Outlined.Home)
-    object Explore : Screen("explore", "Search", Icons.Filled.Search, Icons.Outlined.Search)
-    object Create : Screen("create", "Create", Icons.Filled.Add, Icons.Outlined.Add)
-    object Favorites : Screen("favorites", "Category", Icons.Filled.Category, Icons.Outlined.Category)
-    object Profile : Screen("profile", "Profile", Icons.Filled.Person, Icons.Outlined.Person)
-    object Notifications : Screen("notifications", "Notifications", Icons.Filled.Notifications, Icons.Outlined.Notifications)
+    object Splash        : Screen("splash",        "Splash",        Icons.Filled.Star,          Icons.Outlined.Star)
+    object Login         : Screen("login",         "Login",         Icons.Filled.Person,         Icons.Outlined.Person)
+    object Home          : Screen("home",           "Home",          Icons.Filled.Home,           Icons.Outlined.Home)
+    object Explore       : Screen("explore",        "Search",        Icons.Filled.Search,         Icons.Outlined.Search)
+    object Create        : Screen("create",         "Create",        Icons.Filled.Add,            Icons.Outlined.Add)
+    object Favorites     : Screen("favorites",      "Favorites",     Icons.Filled.Favorite,       Icons.Outlined.FavoriteBorder)
+    object Profile       : Screen("profile",        "Profile",       Icons.Filled.Person,         Icons.Outlined.Person)
+    object Notifications : Screen("notifications",  "Notifications", Icons.Filled.Notifications,  Icons.Outlined.Notifications)
 }
 
 @Composable
@@ -55,34 +98,62 @@ fun MainAppNavigation(viewModel: MainViewModel) {
 
     Scaffold(
         bottomBar = {
-            if (currentRoute != Screen.Splash.route) {
+            if (currentRoute != Screen.Splash.route && currentRoute != Screen.Login.route) {
                 BottomNavigationBar(navController = navController)
             }
         }
     ) { innerPadding ->
         Box(modifier = Modifier.padding(innerPadding)) {
-            NavHost(navController = navController, startDestination = Screen.Splash.route) {
-                composable(Screen.Splash.route) {
+            NavHost(
+                navController    = navController,
+                startDestination = Screen.Splash.route,
+                enterTransition  = slideEnter,
+                exitTransition   = slideExit,
+                popEnterTransition  = slidePopEnter,
+                popExitTransition   = slidePopExit
+            ) {
+                // Splash — fade exit, navigates to Login
+                composable(
+                    route          = Screen.Splash.route,
+                    exitTransition = fadeExit
+                ) {
                     SplashScreen(
                         onSplashFinished = {
-                            navController.navigate(Screen.Home.route) {
+                            navController.navigate(Screen.Login.route) {
                                 popUpTo(Screen.Splash.route) { inclusive = true }
                             }
                         }
                     )
                 }
+
+                // Login — slide in, navigates to Home on success
+                composable(Screen.Login.route) {
+                    LoginScreen(
+                        onLoginSuccess   = {
+                            navController.navigate(Screen.Home.route) {
+                                popUpTo(Screen.Login.route) { inclusive = true }
+                            }
+                        },
+                        onGoogleSignIn   = {
+                            navController.navigate(Screen.Home.route) {
+                                popUpTo(Screen.Login.route) { inclusive = true }
+                            }
+                        },
+                        onNavigateSignup = { /* TODO: signup screen */ }
+                    )
+                }
                 composable(Screen.Home.route) {
                     HomeScreen(
-                        posts = posts,
-                        stories = stories,
-                        suggestedUsers = suggestedUsers,
+                        posts            = posts,
+                        stories          = stories,
+                        suggestedUsers   = suggestedUsers,
                         onOpenNotifications = { navController.navigate(Screen.Notifications.route) }
                     )
                 }
                 composable(Screen.Explore.route) {
                     ExploreScreen(
-                        posts = posts,
-                        selectedHashtag = selectedHashtag,
+                        posts            = posts,
+                        selectedHashtag  = selectedHashtag,
                         onHashtagSelected = { viewModel.selectHashtag(it) }
                     )
                 }
@@ -130,7 +201,7 @@ fun BottomNavigationBar(navController: NavHostController) {
             val isSelected = currentRoute == screen.route
 
             if (screen == Screen.Create) {
-                // Highlighted Center "+" Button
+                // Highlighted Center "+" Button with gradient
                 NavigationBarItem(
                     selected = isSelected,
                     onClick = { navController.navigate(screen.route) },
@@ -138,18 +209,26 @@ fun BottomNavigationBar(navController: NavHostController) {
                         Box(
                             contentAlignment = Alignment.Center,
                             modifier = Modifier
-                                .size(46.dp)
-                                .background(PrimaryPink, CircleShape)
+                                .size(56.dp)
+                                .background(
+                                    brush = Brush.linearGradient(
+                                        colors = listOf(GradientStart, GradientEnd)
+                                    ),
+                                    shape = CircleShape
+                                )
                         ) {
                             Icon(
                                 imageVector = Icons.Filled.Add,
                                 contentDescription = "Create Post",
                                 tint = Color.White,
-                                modifier = Modifier.size(28.dp)
+                                modifier = Modifier.size(30.dp)
                             )
                         }
                     },
-                    label = { Text(screen.title, fontSize = 11.sp, color = PrimaryPink) }
+                    label = { Text(screen.title, fontSize = 11.sp, color = PrimaryPink) },
+                    colors = NavigationBarItemDefaults.colors(
+                        indicatorColor = Color.Transparent
+                    )
                 )
             } else {
                 NavigationBarItem(

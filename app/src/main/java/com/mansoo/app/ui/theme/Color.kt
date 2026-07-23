@@ -2,20 +2,39 @@ package com.mansoo.app.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-val PrimaryPink = Color(0xFFE91E63)
-val PrimaryPinkDark = Color(0xFFC2185B)
-val AccentOrange = Color(0xFFFF5722)
-val GradientStart = Color(0xFFFF416C)
-val GradientEnd = Color(0xFFFF4B2B)
+// ── Primary palette (spec) ─────────────────────────────────
+val PrimaryGreen      = Color(0xFF0F3D3E)   // primary dark green
+val PrimaryGreenLight = Color(0xFF11998E)   // lighter green tint
+val AccentPink        = Color(0xFFF26B8A)   // accent pink highlight
+val AccentPinkDark    = Color(0xFFD94F6E)   // deeper pink for pressed/active
 
-val CardBackground = Color(0xFFFFFFFF)
-val SurfaceLight = Color(0xFFFAFAFA)
-val BackgroundLight = Color(0xFFF4F5F7)
+// Backward-compat aliases used across the codebase
+val PrimaryPink       = AccentPink
+val PrimaryPinkDark   = AccentPinkDark
+val AccentOrange      = Color(0xFFFF8C00)
 
-val TextPrimary = Color(0xFF1E293B)
-val TextSecondary = Color(0xFF64748B)
-val TextMuted = Color(0xFF94A3B8)
+// ── Gradient pairs ─────────────────────────────────────────
+// Main brand gradient (dark-green → teal)
+val GradientStart     = Color(0xFF0F3D3E)
+val GradientEnd       = Color(0xFF11998E)
 
-val VerifiedBlue = Color(0xFF1DA1F2)
-val GoldPremium = Color(0xFFFFB300)
-val LikeRed = Color(0xFFE53935)
+// Warm accent gradient (pink → coral) — used for FAB / CTAs
+val GradientPinkStart = Color(0xFFF26B8A)
+val GradientPinkEnd   = Color(0xFFFF8C69)
+
+// ── Surfaces & Backgrounds ─────────────────────────────────
+val CardBackground    = Color(0xFFFFFFFF)
+val SurfaceLight      = Color(0xFFFAFAFA)
+val BackgroundLight   = Color(0xFFF6F7F9)   // very subtle warm-white
+
+// ── Text ──────────────────────────────────────────────────
+val TextPrimary       = Color(0xFF222222)   // spec: #222222
+val TextSecondary     = Color(0xFF888888)   // spec: #888888
+val TextMuted         = Color(0xFFBBBBBB)
+
+// ── Status / Badges ───────────────────────────────────────
+val VerifiedBlue      = Color(0xFF1DA1F2)
+val GoldPremium       = Color(0xFFFFB300)
+val LikeRed           = Color(0xFFE53935)
+val SuccessGreen      = Color(0xFF4CAF50)
+val ErrorRed          = Color(0xFFE53935)

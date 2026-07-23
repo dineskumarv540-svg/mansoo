@@ -42,16 +42,13 @@ fun PostCard(
     var likesCount by remember { mutableStateOf(post.likesCount) }
     var isSaved by remember { mutableStateOf(post.isSaved) }
 
-    val heartScale by animateFloatAsState(
-        targetValue = if (isLiked) 1.25f else 1.0f,
-        animationSpec = spring(dampingRatio = 0.4f),
-        label = "HeartScale"
-    )
-
     Card(
-        shape = RoundedCornerShape(20.dp),
+        shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = 4.dp,
+            pressedElevation = 2.dp
+        ),
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 12.dp, vertical = 8.dp)
@@ -63,7 +60,7 @@ fun PostCard(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 14.dp, vertical = 10.dp)
+                    .padding(horizontal = 12.dp, vertical = 10.dp)
             ) {
                 // [Profile Pic]
                 AsyncImage(
@@ -176,23 +173,23 @@ fun PostCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 8.dp, vertical = 6.dp)
+                    .padding(horizontal = 12.dp, vertical = 6.dp)
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    // Like ❤️
-                    IconButton(
-                        onClick = {
+                    // Like ❤️  — scale + bounce via AnimatedLikeButton
+                    AnimatedLikeButton(
+                        isLiked  = isLiked,
+                        onToggle = {
                             isLiked = !isLiked
                             likesCount += if (isLiked) 1 else -1
                             onLikeClick(post)
                         }
-                    ) {
+                    ) { liked ->
                         Icon(
-                            imageVector = if (isLiked) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
+                            imageVector        = if (liked) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
                             contentDescription = "Like",
-                            tint = if (isLiked) LikeRed else TextPrimary,
-                            modifier = Modifier
-                                .scale(heartScale)
+                            tint               = if (liked) LikeRed else TextPrimary,
+                            modifier           = Modifier
+                                .padding(8.dp)
                                 .size(24.dp)
                         )
                     }
@@ -239,7 +236,7 @@ fun PostCard(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 14.dp, vertical = 2.dp)
+                    .padding(horizontal = 12.dp, vertical = 2.dp)
             ) {
                 Icon(
                     imageVector = Icons.Filled.People,
@@ -260,7 +257,7 @@ fun PostCard(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 14.dp, vertical = 4.dp)
+                    .padding(horizontal = 12.dp, vertical = 4.dp)
             ) {
                 Text(
                     text = "${post.authorName}: ",
@@ -285,7 +282,7 @@ fun PostCard(
                 color = TextMuted,
                 modifier = Modifier
                     .clickable { onCommentClick(post) }
-                    .padding(horizontal = 14.dp, vertical = 6.dp)
+                    .padding(horizontal = 12.dp, vertical = 6.dp)
             )
 
             Spacer(modifier = Modifier.height(4.dp))

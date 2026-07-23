@@ -203,11 +203,96 @@ object SampleData {
     )
 
     val sampleCategories = listOf(
-        Category("cat1", "Nature", "🌿", "https://images.unsplash.com/photo-1448375240586-882707db888b?w=500", listOf("The mountains call and I must go.", "Peace in every leaf.")),
-        Category("cat2", "Love", "💖", "https://images.unsplash.com/photo-1518199266791-5375a83190b7?w=500", listOf("You are my favorite notification.", "Love is poetry written by two souls.")),
-        Category("cat3", "Politics", "🏛️", "https://images.unsplash.com/photo-1541872703-74c5e44368f9?w=500", listOf("Truth is always revolutionary.", "Democracy dies in darkness.")),
-        Category("cat4", "Humor", "🎭", "https://images.unsplash.com/photo-1513151233558-d860c5398176?w=500", listOf("I’m not lazy, I’m on energy saving mode.", "Chocolate doesn’t ask questions.")),
-        Category("cat5", "Jokes", "😂", "https://images.unsplash.com/photo-1527224857830-43a7acc85260?w=500", listOf("Why don’t scientists trust atoms? They make up everything!", "Parallel lines have so much in common."))
+        Category(
+            id = "cat1", name = "Nature", emoji = "🌿",
+            coverImageUrl = "https://images.unsplash.com/photo-1448375240586-882707db888b?w=600",
+            sampleQuotes = listOf(
+                "The mountains call and I must go.",
+                "Peace lives in every leaf that falls.",
+                "Forests are the lungs of our world.",
+                "Every sunset is the earth's farewell kiss."
+            )
+        ),
+        Category(
+            id = "cat2", name = "Love", emoji = "❤️",
+            coverImageUrl = "https://images.unsplash.com/photo-1518199266791-5375a83190b7?w=600",
+            sampleQuotes = listOf(
+                "You are my favorite notification.",
+                "Love is poetry written by two souls.",
+                "In your arms, the whole world feels safe.",
+                "She smiled, and all the stars fell silent."
+            )
+        ),
+        Category(
+            id = "cat3", name = "Politics", emoji = "🏛️",
+            coverImageUrl = "https://images.unsplash.com/photo-1541872703-74c5e44368f9?w=600",
+            sampleQuotes = listOf(
+                "Truth is always revolutionary.",
+                "Democracy dies in darkness.",
+                "The price of freedom is eternal vigilance.",
+                "Power is not a means; it is an end."
+            )
+        ),
+        Category(
+            id = "cat4", name = "Humor", emoji = "😂",
+            coverImageUrl = "https://images.unsplash.com/photo-1513151233558-d860c5398176?w=600",
+            sampleQuotes = listOf(
+                "I'm not lazy, I'm on energy-saving mode.",
+                "Chocolate doesn't ask questions.",
+                "My bed is a magical place where I suddenly remember everything.",
+                "Life is short. Smile while you still have teeth. 😁"
+            )
+        ),
+        Category(
+            id = "cat4b", name = "Jokes", emoji = "🎭",
+            coverImageUrl = "https://images.unsplash.com/photo-1513151233558-d860c5398176?w=600",
+            sampleQuotes = listOf(
+                "Why don’t scientists trust atoms? Because they make up everything!",
+                "Parallel lines have so much in common. It’s a shame they’ll never meet.",
+                "My wife told me to stop impersonating a flamingo. I had to put my foot down.",
+                "I told my doctor that I broke my arm in two places. He told me to stop going to those places."
+            )
+        ),
+        Category(
+            id = "cat5", name = "Sadness", emoji = "🌧️",
+            coverImageUrl = "https://images.unsplash.com/photo-1519681393784-d120267933ba?w=600",
+            sampleQuotes = listOf(
+                "Some wounds don't bleed, yet they never heal.",
+                "She smiled to the world, and wept in silence.",
+                "Even the moon hides behind clouds sometimes.",
+                "Tears are the words the heart cannot say."
+            )
+        ),
+        Category(
+            id = "cat6", name = "Motivation", emoji = "🔥",
+            coverImageUrl = "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=600",
+            sampleQuotes = listOf(
+                "Your only limit is the story you keep telling yourself.",
+                "Fall seven times. Stand up eight.",
+                "Discipline beats talent when talent doesn't work hard.",
+                "The comeback is always stronger than the setback."
+            )
+        ),
+        Category(
+            id = "cat7", name = "Friendship", emoji = "🤝",
+            coverImageUrl = "https://images.unsplash.com/photo-1516912481808-3406841bd33c?w=600",
+            sampleQuotes = listOf(
+                "A real friend walks in when the world walks out.",
+                "Friendship is the comfort of knowing you're never alone.",
+                "Old friends are gold — keep them close.",
+                "Good friends are like stars — you don't always see them but they're always there."
+            )
+        ),
+        Category(
+            id = "cat8", name = "Spirituality", emoji = "🕊️",
+            coverImageUrl = "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600",
+            sampleQuotes = listOf(
+                "Be still and know that you are enough.",
+                "The soul always knows the way home.",
+                "Prayer is not a spare wheel — it is the steering wheel.",
+                "Silence is the language of God."
+            )
+        )
     )
 
     val sampleNotifications = listOf(

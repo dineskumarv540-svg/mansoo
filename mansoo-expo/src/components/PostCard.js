@@ -4,6 +4,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import AnimatedHeart from './AnimatedHeart';
 import { COLORS } from '../theme/colors';
+import { togglePostLikeInFirestore } from '../services/firebaseDb';
 
 export default function PostCard({ post, onOptionsPress, onCommentPress, onSharePress }) {
   const [isLiked, setIsLiked] = useState(post.isLiked || false);
@@ -11,8 +12,10 @@ export default function PostCard({ post, onOptionsPress, onCommentPress, onShare
   const [isSaved, setIsSaved] = useState(post.isSaved || false);
 
   const toggleLike = () => {
-    setIsLiked(prev => !prev);
+    const nextState = !isLiked;
+    setIsLiked(nextState);
     setLikesCount(prev => (isLiked ? prev - 1 : prev + 1));
+    togglePostLikeInFirestore(post.id, 'u1', nextState);
   };
 
   const toggleSave = () => {

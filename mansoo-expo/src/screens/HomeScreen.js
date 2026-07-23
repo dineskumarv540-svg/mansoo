@@ -14,6 +14,7 @@ import FeaturedSection from '../components/FeaturedSection';
 import UserSuggestions from '../components/UserSuggestions';
 import PostCard from '../components/PostCard';
 import PostOptionsSheet from '../components/PostOptionsSheet';
+import CommentsModal from '../components/CommentsModal';
 import { DUMMY_POSTS, DUMMY_STORIES, DUMMY_USERS } from '../data/dummyData';
 import { COLORS } from '../theme/colors';
 
@@ -24,6 +25,7 @@ import { getTodayChallenge } from '../services/challengeService';
 export default function HomeScreen({ navigation }) {
   const [selectedPost, setSelectedPost] = useState(null);
   const [sheetVisible, setSheetVisible] = useState(false);
+  const [commentsVisible, setCommentsVisible] = useState(false);
 
   const featuredPosts = DUMMY_POSTS.filter(p => p.isFeatured);
   const todayChallenge = getTodayChallenge();
@@ -31,6 +33,11 @@ export default function HomeScreen({ navigation }) {
   const handleOptionsPress = (post) => {
     setSelectedPost(post);
     setSheetVisible(true);
+  };
+
+  const handleCommentPress = (post) => {
+    setSelectedPost(post);
+    setCommentsVisible(true);
   };
 
   const handleOptionSelect = (action) => {
@@ -100,7 +107,7 @@ export default function HomeScreen({ navigation }) {
           <PostCard
             post={item}
             onOptionsPress={handleOptionsPress}
-            onCommentPress={(p) => Alert.alert('Comments', `View comments for ${p.id}`)}
+            onCommentPress={handleCommentPress}
             onSharePress={(p) => Alert.alert('Share', `Share post ${p.id}`)}
           />
         )}
@@ -119,6 +126,13 @@ export default function HomeScreen({ navigation }) {
         post={selectedPost}
         onClose={() => setSheetVisible(false)}
         onOptionSelect={handleOptionSelect}
+      />
+
+      {/* Comments Modal */}
+      <CommentsModal
+        visible={commentsVisible}
+        post={selectedPost}
+        onClose={() => setCommentsVisible(false)}
       />
     </SafeAreaView>
   );

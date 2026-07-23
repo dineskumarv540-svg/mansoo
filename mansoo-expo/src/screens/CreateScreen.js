@@ -28,6 +28,10 @@ const SOLID_COLORS = [
 
 const TEXT_COLORS = ['#FFFFFF', '#000000', '#FFD54F', '#81D4FA', '#F48FB1', '#A5D6A7'];
 
+import { moderateText } from '../services/moderationService';
+import { createPostInFirestore } from '../services/firebaseDb';
+import { adMobManager } from '../services/admobService';
+
 export default function CreateScreen({ navigation }) {
   const [quoteText, setQuoteText] = useState('');
   const [isBold, setIsBold] = useState(false);
@@ -47,11 +51,36 @@ export default function CreateScreen({ navigation }) {
     else setTextAlign('center');
   };
 
-  const handlePublish = () => {
+  const handlePublish = async () => {
     if (!quoteText.trim()) {
       Alert.alert('Empty Post', 'Please write your quote before publishing.');
       return;
     }
+
+    // 1. Content Moderation Check
+    const modResult = moderateText(quoteText);
+    if (!modResult.isValid) {
+      Alert.alert('Content Warning', `Your post cannot be published: ${modResult.reason}`);
+      return;
+    }
+
+    // 2. Firestore Post Creation
+    await createPostInFirestore({
+      authorId: 'u1',
+      authorName: 'Aarav Sharma',
+      authorHandle: '@aarav_writes',
+      authorAvatarUrl: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=400',
+      isVerified: true,
+      quoteText: quoteText.trim(),
+      category: selectedCategory,
+      backgroundImageUrl: bgTab === 0 ? selectedBgUrl : '',
+      fontStyle: isItalic ? 'Cursive' : 'Serif',
+      textColor: selectedTextColor,
+    });
+
+    // 3. Trigger Interstitial AdMob Ad
+    adMobManager.showInterstitialOnPost();
+
     Alert.alert('Post Published! ✨', 'Your quote has been published to the Mansoo feed.');
     navigation.navigate('Home');
   };

@@ -3,9 +3,12 @@ import { View, Text, StyleSheet, Modal, TouchableOpacity, TouchableWithoutFeedba
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS } from '../theme/colors';
 
+import ReportModal from './ReportModal';
+
 export default function PostOptionsSheet({ visible, post, onClose, onOptionSelect }) {
   const [notificationsOn, setNotificationsOn] = useState(false);
   const [unfollowed, setUnfollowed] = useState(false);
+  const [reportModalVisible, setReportModalVisible] = useState(false);
 
   if (!visible) return null;
 
@@ -16,6 +19,8 @@ export default function PostOptionsSheet({ visible, post, onClose, onOptionSelec
     } else if (key === 'unfollow') {
       setUnfollowed(prev => !prev);
       onOptionSelect && onOptionSelect(`${!unfollowed ? 'Unfollowed' : 'Followed'} author`);
+    } else if (key === 'Report Post') {
+      setReportModalVisible(true);
     } else {
       onOptionSelect && onOptionSelect(key);
       onClose();
@@ -157,6 +162,16 @@ export default function PostOptionsSheet({ visible, post, onClose, onOptionSelec
           </TouchableWithoutFeedback>
         </View>
       </TouchableWithoutFeedback>
+
+      <ReportModal
+        visible={reportModalVisible}
+        targetItem={post}
+        contentType="post"
+        onClose={() => {
+          setReportModalVisible(false);
+          onClose();
+        }}
+      />
     </Modal>
   );
 }

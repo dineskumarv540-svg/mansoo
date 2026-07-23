@@ -15,18 +15,64 @@ import StaggeredGrid from '../components/StaggeredGrid';
 import { DUMMY_POSTS, DUMMY_USERS } from '../data/dummyData';
 import { COLORS } from '../theme/colors';
 
-export default function ProfileScreen() {
-  const [selectedTab, setSelectedTab] = useState(0); // 0: Posts, 1: Saved, 2: Liked
-  const user = DUMMY_USERS[0];
+import { useAuth } from '../context/AuthContext';
+import EmailVerificationBanner from '../components/EmailVerificationBanner';
 
-  const userPosts = DUMMY_POSTS.filter(p => p.authorId === user.id || p.authorName === user.name);
+export default function ProfileScreen({ navigation }) {
+  const [selectedTab, setSelectedTab] = useState(0); // 0: Posts, 1: Saved, 2: Liked
+  const { user, logout, deleteAccount } = useAuth();
+  const displayUser = user || DUMMY_USERS[0];
+
+  const userPosts = DUMMY_POSTS.filter(p => p.authorId === displayUser.uid || p.authorName === displayUser.name || p.authorName === 'Aarav Sharma');
   const savedPosts = DUMMY_POSTS.filter(p => p.isSaved);
   const likedPosts = DUMMY_POSTS.filter(p => p.isLiked);
 
   const currentPosts = selectedTab === 0 ? userPosts : selectedTab === 1 ? savedPosts : likedPosts;
 
+  const handleLogout = () => {
+    Alert.alert(
+      'Log Out',
+      'Are you sure you want to log out of your account?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Log Out',
+          style: 'destructive',
+          onPress: async () => {
+            await logout();
+            if (navigation) navigation.replace('Login');
+          }
+        }
+      ]
+    );
+  };
+
+  const handleDeleteAccount = () => {
+    Alert.alert(
+      'Delete Account',
+      'This action is permanent and cannot be undone. All your posts, followers, and profile data will be permanently removed.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete Permanently',
+          style: 'destructive',
+          onPress: async () => {
+            const res = await deleteAccount();
+            if (res.success) {
+              Alert.alert('Account Deleted', 'Your account has been deleted.');
+              if (navigation) navigation.replace('Login');
+            } else {
+              Alert.alert('Action Failed', res.error);
+            }
+          }
+        }
+      ]
+    );
+  };
+
   return (
     <SafeAreaView style={styles.container}>
+      <EmailVerificationBanner />
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* Cover Photo */}
         <View style={styles.coverContainer}>
@@ -38,6 +84,10 @@ export default function ProfileScreen() {
             colors={['transparent', 'rgba(255,255,255,0.9)', '#FFFFFF']}
             style={styles.coverGradient}
           />
+          {/* Settings / Logout Quick Trigger */}
+          <TouchableOpacity style={styles.settingsBtn} onPress={handleLogout}>
+            <Ionicons name="log-out-outline" size={22} color="#FFFFFF" />
+          </TouchableOpacity>
         </View>
 
         {/* Profile Info Header */}
@@ -45,38 +95,32 @@ export default function ProfileScreen() {
           {/* Avatar */}
           <LinearGradient colors={COLORS.gradientStory} style={styles.avatarGradient}>
             <View style={styles.avatarWhiteGap}>
-              <Image source={{ uri: user.avatarUrl }} style={styles.avatar} />
+              <Image source={{ uri: displayUser.photoURL || displayUser.avatarUrl }} style={styles.avatar} />
             </View>
           </LinearGradient>
 
           {/* Name & Badge */}
           <View style={styles.nameRow}>
-            <Text style={styles.name}>{user.name}</Text>
-            {user.isVerified && (
+            <Text style={styles.name}>{displayUser.displayName || displayUser.name}</Text>
+            {displayUser.isVerified && (
               <Ionicons name="checkmark-circle" size={18} color={COLORS.verified} style={{ marginLeft: 4 }} />
             )}
-            {user.isPro && (
+            {displayUser.isPro && (
               <View style={styles.proBadge}>
                 <Text style={styles.proText}>PRO</Text>
               </View>
             )}
           </View>
 
-          <Text style={styles.handle}>{user.handle}</Text>
+          <Text style={styles.handle}>{displayUser.handle || `@${(displayUser.displayName || 'writer').toLowerCase().replace(/\s+/g, '_')}`}</Text>
 
           {/* Bio */}
-          <Text style={styles.bio}>{user.bio}</Text>
-
-          {/* Website Link */}
-          <TouchableOpacity style={styles.websiteRow}>
-            <Ionicons name="link-outline" size={14} color={COLORS.primary} />
-            <Text style={styles.websiteText}>{user.website}</Text>
-          </TouchableOpacity>
+          <Text style={styles.bio}>{displayUser.bio || 'Writing the language of the soul ✨'}</Text>
 
           {/* Stats Row */}
           <View style={styles.statsRow}>
             <View style={styles.statItem}>
-              <Text style={styles.statValue}>{user.postsCount}</Text>
+              <Text style={styles.statValue}>{displayUser.postsCount || 480}</Text>
               <Text style={styles.statLabel}>Posts</Text>
             </View>
             <View style={styles.statDivider} />
@@ -86,21 +130,21 @@ export default function ProfileScreen() {
             </View>
             <View style={styles.statDivider} />
             <View style={styles.statItem}>
-              <Text style={styles.statValue}>{user.followingCount}</Text>
+              <Text style={styles.statValue}>{displayUser.followingCount || 312}</Text>
               <Text style={styles.statLabel}>Following</Text>
             </View>
           </View>
 
           {/* Action Buttons */}
           <View style={styles.actionsRow}>
-            <TouchableOpacity style={styles.editBtn} onPress={() => Alert.alert('Edit Profile', 'Open Profile Editor')}>
-              <Ionicons name="create-outline" size={16} color={COLORS.textPrimary} />
-              <Text style={styles.editBtnText}>Edit Profile</Text>
+            <TouchableOpacity style={styles.editBtn} onPress={handleLogout}>
+              <Ionicons name="log-out-outline" size={16} color={COLORS.textPrimary} />
+              <Text style={styles.editBtnText}>Log Out</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.shareBtn} onPress={() => Alert.alert('Share', 'Share profile link')}>
-              <Ionicons name="person-add-outline" size={16} color={COLORS.textPrimary} />
-              <Text style={styles.editBtnText}>Share</Text>
+            <TouchableOpacity style={styles.deleteBtn} onPress={handleDeleteAccount}>
+              <Ionicons name="trash-outline" size={16} color={COLORS.error} />
+              <Text style={[styles.editBtnText, { color: COLORS.error }]}>Delete Account</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -148,6 +192,29 @@ const styles = StyleSheet.create({
   },
   coverGradient: {
     ...StyleSheet.absoluteFillObject,
+  },
+  settingsBtn: {
+    position: 'absolute',
+    top: 12,
+    right: 16,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(0,0,0,0.35)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  deleteBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FFF5F5',
+    borderWidth: 1.5,
+    borderColor: '#FFCDD2',
+    borderRadius: 12,
+    paddingVertical: 10,
+    marginLeft: 8,
   },
   profileHeader: {
     alignItems: 'center',

@@ -9,44 +9,62 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  ActivityIndicator
+  ActivityIndicator,
+  Alert
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import { Alert } from 'react-native';
 import { COLORS } from '../theme/colors';
-import { validateEmail, validatePassword } from '../utils/authValidation';
+import { validateEmail, validatePassword, validateName } from '../utils/authValidation';
 import { useAuth } from '../context/AuthContext';
-import ForgotPasswordModal from '../components/ForgotPasswordModal';
 
-export default function LoginScreen({ navigation }) {
+export default function SignUpScreen({ navigation }) {
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  const [nameErr, setNameErr] = useState('');
   const [emailErr, setEmailErr] = useState('');
   const [passErr, setPassErr] = useState('');
-  const [forgotModalVisible, setForgotModalVisible] = useState(false);
+  const [confirmErr, setConfirmErr] = useState('');
 
-  const { login } = useAuth();
+  const { signUp } = useAuth();
 
-  const handleLogin = async () => {
+  const handleSignUp = async () => {
+    const vName = validateName(name);
     const vEmail = validateEmail(email);
     const vPass = validatePassword(password);
 
+    setNameErr(vName.message);
     setEmailErr(vEmail.message);
     setPassErr(vPass.message);
 
-    if (!vEmail.isValid || !vPass.isValid) return;
+    if (password !== confirmPassword) {
+      setConfirmErr('Passwords do not match');
+      return;
+    } else {
+      setConfirmErr('');
+    }
+
+    if (!vName.isValid || !vEmail.isValid || !vPass.isValid) {
+      return;
+    }
 
     setLoading(true);
-    const res = await login(email, password);
+    const result = await signUp(email, password, name);
     setLoading(false);
 
-    if (res.success) {
-      navigation.replace('MainTabs');
+    if (result.success) {
+      Alert.alert(
+        'Account Created! ✨',
+        'A verification email has been sent. Please check your inbox.',
+        [{ text: 'Continue', onPress: () => navigation.replace('MainTabs') }]
+      );
     } else {
-      Alert.alert('Login Failed', res.error);
+      Alert.alert('Registration Failed', result.error);
     }
   };
 
@@ -57,19 +75,37 @@ export default function LoginScreen({ navigation }) {
         style={{ flex: 1 }}
       >
         <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-          {/* Header Branding */}
+          {/* Header Bar */}
+          <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
+            <Ionicons name="arrow-back" size={24} color={COLORS.textPrimary} />
+          </TouchableOpacity>
+
+          {/* Branding Header */}
           <View style={styles.brandingHeader}>
             <LinearGradient colors={COLORS.gradientGreen} style={styles.logoCircle}>
               <Text style={styles.logoLetter}>M</Text>
             </LinearGradient>
             <Text style={styles.appName}>Mansoo</Text>
-            <Text style={styles.tagline}>The Voice of Heart</Text>
+            <Text style={styles.tagline}>Create your writer account</Text>
           </View>
 
           {/* Form Card */}
           <View style={styles.formCard}>
-            <Text style={styles.welcomeText}>Welcome back 👋</Text>
-            <Text style={styles.subText}>Sign in to continue writing your story</Text>
+            <Text style={styles.welcomeText}>Join Mansoo ✨</Text>
+            <Text style={styles.subText}>Share your poetry, stories & quotes with the world</Text>
+
+            {/* Name Field */}
+            <View style={[styles.inputContainer, nameErr ? styles.inputError : null]}>
+              <Ionicons name="person-outline" size={20} color={COLORS.primary} style={styles.inputIcon} />
+              <TextInput
+                style={styles.input}
+                placeholder="Full Name"
+                placeholderTextColor="#AAAAAA"
+                value={name}
+                onChangeText={(v) => { setName(v); setNameErr(''); }}
+              />
+            </View>
+            {nameErr ? <Text style={styles.errorText}>{nameErr}</Text> : null}
 
             {/* Email Field */}
             <View style={[styles.inputContainer, emailErr ? styles.inputError : null]}>
@@ -91,7 +127,7 @@ export default function LoginScreen({ navigation }) {
               <Ionicons name="lock-closed-outline" size={20} color={COLORS.primary} style={styles.inputIcon} />
               <TextInput
                 style={styles.input}
-                placeholder="Password"
+                placeholder="Password (min 6 characters)"
                 placeholderTextColor="#AAAAAA"
                 value={password}
                 onChangeText={(v) => { setPassword(v); setPassErr(''); }}
@@ -107,49 +143,39 @@ export default function LoginScreen({ navigation }) {
             </View>
             {passErr ? <Text style={styles.errorText}>{passErr}</Text> : null}
 
-            {/* Forgot Password */}
-            <TouchableOpacity style={styles.forgotBtn} onPress={() => setForgotModalVisible(true)}>
-              <Text style={styles.forgotText}>Forgot password?</Text>
-            </TouchableOpacity>
+            {/* Confirm Password Field */}
+            <View style={[styles.inputContainer, confirmErr ? styles.inputError : null]}>
+              <Ionicons name="checkmark-circle-outline" size={20} color={COLORS.primary} style={styles.inputIcon} />
+              <TextInput
+                style={styles.input}
+                placeholder="Confirm Password"
+                placeholderTextColor="#AAAAAA"
+                value={confirmPassword}
+                onChangeText={(v) => { setConfirmPassword(v); setConfirmErr(''); }}
+                secureTextEntry={!showPassword}
+              />
+            </View>
+            {confirmErr ? <Text style={styles.errorText}>{confirmErr}</Text> : null}
 
-            {/* Sign In Button */}
-            <TouchableOpacity onPress={handleLogin} activeOpacity={0.8} style={styles.loginBtnContainer}>
-              <LinearGradient colors={COLORS.gradientGreen} style={styles.loginBtn}>
+            {/* Sign Up Button */}
+            <TouchableOpacity onPress={handleSignUp} activeOpacity={0.8} style={styles.signUpBtnContainer}>
+              <LinearGradient colors={COLORS.gradientGreen} style={styles.signUpBtn}>
                 {loading ? (
                   <ActivityIndicator color="#FFFFFF" size="small" />
                 ) : (
-                  <Text style={styles.loginBtnText}>Sign In</Text>
+                  <Text style={styles.signUpBtnText}>Create Account</Text>
                 )}
               </LinearGradient>
             </TouchableOpacity>
-
-            {/* Divider */}
-            <View style={styles.dividerRow}>
-              <View style={styles.dividerLine} />
-              <Text style={styles.dividerText}>or continue with</Text>
-              <View style={styles.dividerLine} />
-            </View>
-
-            {/* Google Button */}
-            <TouchableOpacity style={styles.googleBtn} onPress={handleLogin} activeOpacity={0.8}>
-              <Text style={styles.googleIcon}>G</Text>
-              <Text style={styles.googleBtnText}>Continue with Google</Text>
-            </TouchableOpacity>
           </View>
 
-          {/* Sign Up Footer */}
+          {/* Footer Row */}
           <View style={styles.footerRow}>
-            <Text style={styles.footerText}>New to Mansoo? </Text>
-            <TouchableOpacity onPress={() => navigation.navigate('SignUp')}>
-              <Text style={styles.signUpText}>Create Account</Text>
+            <Text style={styles.footerText}>Already have an account? </Text>
+            <TouchableOpacity onPress={() => navigation.navigate('Login')}>
+              <Text style={styles.signInText}>Sign In</Text>
             </TouchableOpacity>
           </View>
-
-          {/* Forgot Password Modal */}
-          <ForgotPasswordModal
-            visible={forgotModalVisible}
-            onClose={() => setForgotModalVisible(false)}
-          />
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -163,37 +189,40 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: 24,
-    paddingVertical: 20,
+    paddingVertical: 12,
     alignItems: 'center',
+  },
+  backBtn: {
+    alignSelf: 'flex-start',
+    padding: 4,
+    marginBottom: 10,
   },
   brandingHeader: {
     alignItems: 'center',
-    marginTop: 20,
-    marginBottom: 30,
+    marginBottom: 20,
   },
   logoCircle: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+    width: 68,
+    height: 68,
+    borderRadius: 34,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 8,
   },
   logoLetter: {
     color: '#FFFFFF',
-    fontSize: 48,
+    fontSize: 40,
     fontWeight: 'bold',
     fontFamily: 'serif',
   },
   appName: {
-    fontSize: 32,
+    fontSize: 28,
     fontWeight: 'bold',
     color: COLORS.primary,
     fontFamily: 'serif',
   },
   tagline: {
-    fontSize: 13,
-    fontStyle: 'italic',
+    fontSize: 12,
     color: COLORS.textSecondary,
     marginTop: 2,
   },
@@ -201,7 +230,7 @@ const styles = StyleSheet.create({
     width: '100%',
     backgroundColor: '#FFFFFF',
     borderRadius: 24,
-    padding: 24,
+    padding: 22,
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
@@ -211,17 +240,17 @@ const styles = StyleSheet.create({
     borderColor: '#F0F0F0',
   },
   welcomeText: {
-    fontSize: 22,
+    fontSize: 20,
     fontWeight: 'bold',
     color: COLORS.textPrimary,
     textAlign: 'center',
   },
   subText: {
-    fontSize: 13,
+    fontSize: 12,
     color: COLORS.textSecondary,
     textAlign: 'center',
-    marginTop: 4,
-    marginBottom: 20,
+    marginTop: 2,
+    marginBottom: 16,
   },
   inputContainer: {
     flexDirection: 'row',
@@ -229,10 +258,13 @@ const styles = StyleSheet.create({
     backgroundColor: '#F8F9FA',
     borderRadius: 14,
     paddingHorizontal: 14,
-    paddingVertical: 12,
-    marginBottom: 14,
+    paddingVertical: 11,
+    marginTop: 10,
     borderWidth: 1,
     borderColor: '#EEEEEE',
+  },
+  inputError: {
+    borderColor: COLORS.error,
   },
   inputIcon: {
     marginRight: 10,
@@ -242,75 +274,37 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: COLORS.textPrimary,
   },
-  forgotBtn: {
-    alignSelf: 'flex-end',
-    marginBottom: 20,
+  errorText: {
+    fontSize: 11,
+    color: COLORS.error,
+    marginTop: 2,
+    marginLeft: 4,
   },
-  forgotText: {
-    fontSize: 12,
-    fontWeight: 'bold',
-    color: COLORS.primary,
-  },
-  loginBtnContainer: {
+  signUpBtnContainer: {
     borderRadius: 16,
     overflow: 'hidden',
+    marginTop: 20,
   },
-  loginBtn: {
+  signUpBtn: {
     paddingVertical: 14,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  loginBtnText: {
+  signUpBtnText: {
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: 'bold',
   },
-  dividerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginVertical: 18,
-  },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: '#EEEEEE',
-  },
-  dividerText: {
-    marginHorizontal: 10,
-    fontSize: 12,
-    color: COLORS.textSecondary,
-  },
-  googleBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1.5,
-    borderColor: '#DDDDDD',
-    borderRadius: 14,
-    paddingVertical: 12,
-  },
-  googleIcon: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#4285F4',
-    marginRight: 10,
-  },
-  googleBtnText: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: COLORS.textPrimary,
-  },
   footerRow: {
     flexDirection: 'row',
-    marginTop: 28,
+    marginTop: 20,
     marginBottom: 20,
   },
   footerText: {
     fontSize: 14,
     color: COLORS.textSecondary,
   },
-  signUpText: {
+  signInText: {
     fontSize: 14,
     fontWeight: 'bold',
     color: COLORS.primary,

@@ -178,18 +178,27 @@ export default function CreateScreen({ navigation, route }) {
           ) : null}
         </View>
 
-        <TouchableOpacity onPress={handlePublish} disabled={isSubmitting} style={styles.postBtnContainer}>
-          <LinearGradient colors={COLORS.gradientPink} style={styles.postBtn}>
-            {isSubmitting ? (
-              <ActivityIndicator color="#FFFFFF" size="small" />
-            ) : (
-              <>
-                <Ionicons name={editingPost ? "checkmark" : "send"} size={14} color="#FFFFFF" />
-                <Text style={styles.postBtnText}>{editingPost ? 'Save' : 'Post'}</Text>
-              </>
-            )}
-          </LinearGradient>
-        </TouchableOpacity>
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <TouchableOpacity
+            style={{ marginRight: 10, padding: 4 }}
+            onPress={() => navigation.navigate('Drafts')}
+          >
+            <Ionicons name="folder-open-outline" size={22} color={COLORS.primary} />
+          </TouchableOpacity>
+
+          <TouchableOpacity onPress={handlePublish} disabled={isSubmitting} style={styles.postBtnContainer}>
+            <LinearGradient colors={COLORS.gradientPink} style={styles.postBtn}>
+              {isSubmitting ? (
+                <ActivityIndicator color="#FFFFFF" size="small" />
+              ) : (
+                <>
+                  <Ionicons name={editingPost ? "checkmark" : "send"} size={14} color="#FFFFFF" />
+                  <Text style={styles.postBtnText}>{editingPost ? 'Save' : 'Post'}</Text>
+                </>
+              )}
+            </LinearGradient>
+          </TouchableOpacity>
+        </View>
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>

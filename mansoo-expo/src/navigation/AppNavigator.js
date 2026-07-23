@@ -8,6 +8,7 @@ import LoginScreen from '../screens/LoginScreen';
 import SignUpScreen from '../screens/SignUpScreen';
 import TabNavigator from './TabNavigator';
 import NotificationsScreen from '../screens/NotificationsScreen';
+import DraftsScreen from '../screens/DraftsScreen';
 import { AuthProvider } from '../context/AuthContext';
 
 const Stack = createNativeStackNavigator();
@@ -29,6 +30,7 @@ export default function AppNavigator() {
           <Stack.Screen name="SignUp" component={SignUpScreen} />
           <Stack.Screen name="MainTabs" component={TabNavigator} />
           <Stack.Screen name="Notifications" component={NotificationsScreen} />
+          <Stack.Screen name="Drafts" component={DraftsScreen} />
         </Stack.Navigator>
       </NavigationContainer>
     </AuthProvider>

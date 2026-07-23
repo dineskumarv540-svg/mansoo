@@ -1,0 +1,111 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // 1. Users collection
+    match /users/{userId} {
+      allow read: if true; // Public profiles readable
+      allow create: if isOwner(userId);
+      allow update: if isOwner(userId) || (isAuthenticated() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['followersCount', 'followingCount']));
+      allow delete: if isOwner(userId);
+
+      // Subcollection: Bookmarks
+      match /bookmarks/{postId} {
+        allow read, write: if isOwner(userId);
+      }
+
+      // Subcollection: Followers
+      match /followers/{followerId} {
+        allow read: if true;
+        allow write: if isAuthenticated() && request.auth.uid == followerId;
+      }
+
+      // Subcollection: Following
+      match /following/{targetId} {
+        allow read: if true;
+        allow write: if isOwner(userId);
+      }
+    }
+
+    // 2. Posts collection
+    match /posts/{postId} {
+      allow read: if true;
+      allow create: if isAuthenticated() && request.resource.data.authorId == request.auth.uid;
+      allow update: if isAuthenticated(); // For likesCount, commentsCount atomic updates
+      allow delete: if isAuthenticated() && resource.data.authorId == request.auth.uid;
+
+      // Subcollection: Comments
+      match /comments/{commentId} {
+        allow read: if true;
+        allow create: if isAuthenticated() && request.resource.data.authorId == request.auth.uid;
+        allow update, delete: if isAuthenticated() && resource.data.authorId == request.auth.uid;
+      }
+
+      // Subcollection: Likes
+      match /likes/{userId} {
+        allow read: if true;
+        allow write: if isAuthenticated() && request.auth.uid == userId;
+      }
+    }
+
+    // 3. Global Comments collection
+    match /comments/{commentId} {
+      allow read: if true;
+      allow create: if isAuthenticated() && request.resource.data.authorId == request.auth.uid;
+      allow update, delete: if isAuthenticated() && resource.data.authorId == request.auth.uid;
+    }
+
+    // 4. Global Likes collection
+    match /likes/{likeId} {
+      allow read: if true;
+      allow create, delete: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+    }
+
+    // 5. Global Bookmarks collection
+    match /bookmarks/{bookmarkId} {
+      allow read, write: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+    }
+
+    // 6. Global Followers collection
+    match /followers/{followerId} {
+      allow read: if true;
+      allow write: if isAuthenticated();
+    }
+
+    // 7. Global Following collection
+    match /following/{followingId} {
+      allow read: if true;
+      allow write: if isAuthenticated();
+    }
+
+    // 8. Notifications collection
+    match /notifications/{notificationId} {
+      allow read: if isAuthenticated() && resource.data.recipientId == request.auth.uid;
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated() && resource.data.recipientId == request.auth.uid;
+      allow delete: if isAuthenticated() && resource.data.recipientId == request.auth.uid;
+    }
+
+    // 9. Stories collection
+    match /stories/{storyId} {
+      allow read: if true;
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+      allow delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
+    }
+
+    // 10. Reports collection
+    match /reports/{reportId} {
+      allow create: if isAuthenticated() && request.resource.data.reportedByUserId == request.auth.uid;
+      allow read, update, delete: if false; // Only accessible via Firebase Admin SDK
+    }
+  }
+}

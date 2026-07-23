@@ -10,6 +10,7 @@ import TabNavigator from './TabNavigator';
 import NotificationsScreen from '../screens/NotificationsScreen';
 import DraftsScreen from '../screens/DraftsScreen';
 import AnalyticsScreen from '../screens/AnalyticsScreen';
+import GamificationScreen from '../screens/GamificationScreen';
 import { AuthProvider } from '../context/AuthContext';
 
 const Stack = createNativeStackNavigator();
@@ -33,6 +34,7 @@ export default function AppNavigator() {
           <Stack.Screen name="Notifications" component={NotificationsScreen} />
           <Stack.Screen name="Drafts" component={DraftsScreen} />
           <Stack.Screen name="Analytics" component={AnalyticsScreen} />
+          <Stack.Screen name="Gamification" component={GamificationScreen} />
         </Stack.Navigator>
       </NavigationContainer>
     </AuthProvider>

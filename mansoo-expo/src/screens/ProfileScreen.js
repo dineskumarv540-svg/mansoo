@@ -173,6 +173,11 @@ export default function ProfileScreen({ navigation }) {
               <Text style={styles.editBtnText}>Edit</Text>
             </TouchableOpacity>
 
+            <TouchableOpacity style={styles.editBtn} onPress={() => navigation.navigate('Gamification')}>
+              <Ionicons name="trophy-outline" size={16} color={COLORS.accent} />
+              <Text style={[styles.editBtnText, { color: COLORS.accent }]}>Rewards</Text>
+            </TouchableOpacity>
+
             <TouchableOpacity style={styles.editBtn} onPress={() => navigation.navigate('Analytics')}>
               <Ionicons name="bar-chart-outline" size={16} color={COLORS.primary} />
               <Text style={[styles.editBtnText, { color: COLORS.primary }]}>Analytics</Text>

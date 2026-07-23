@@ -38,10 +38,13 @@ const SOLID_COLORS = [
 
 const TEXT_COLORS = ['#FFFFFF', '#000000', '#FFD54F', '#81D4FA', '#F48FB1', '#A5D6A7'];
 
+import PremiumPostDesigner from '../components/PremiumPostDesigner';
+
 export default function CreateScreen({ navigation, route }) {
   const editingPost = route?.params?.editPost || null;
 
   const [quoteText, setQuoteText] = useState(editingPost ? editingPost.quoteText : '');
+  const [designerModalVisible, setDesignerModalVisible] = useState(false);
   const [isBold, setIsBold] = useState(false);
   const [isItalic, setIsItalic] = useState(editingPost?.fontStyle === 'Cursive');
   const [fontFamilyStyle, setFontFamilyStyle] = useState(editingPost?.fontStyle || 'Serif');
@@ -180,7 +183,14 @@ export default function CreateScreen({ navigation, route }) {
 
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
           <TouchableOpacity
-            style={{ marginRight: 10, padding: 4 }}
+            style={{ marginRight: 8, padding: 4 }}
+            onPress={() => setDesignerModalVisible(true)}
+          >
+            <Ionicons name="sparkles-outline" size={22} color={COLORS.accent} />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={{ marginRight: 8, padding: 4 }}
             onPress={() => navigation.navigate('Drafts')}
           >
             <Ionicons name="folder-open-outline" size={22} color={COLORS.primary} />
@@ -407,14 +417,20 @@ export default function CreateScreen({ navigation, route }) {
             <Text style={styles.draftBtnText}>Save Draft</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.publishBtnContainer} onPress={handlePublish} disabled={isSubmitting}>
-            <LinearGradient colors={COLORS.gradientGreen} style={styles.publishBtn}>
-              <Ionicons name={editingPost ? "checkmark-circle" : "paper-plane"} size={18} color="#FFFFFF" />
-              <Text style={styles.publishBtnText}>{editingPost ? 'Save Edits' : 'Post Now'}</Text>
-            </LinearGradient>
-          </TouchableOpacity>
         </View>
       </ScrollView>
+
+      <PremiumPostDesigner
+        visible={designerModalVisible}
+        initialText={quoteText}
+        onClose={() => setDesignerModalVisible(false)}
+        onApply={(designedConfig) => {
+          if (designedConfig.quoteText) setQuoteText(designedConfig.quoteText);
+          if (designedConfig.backgroundImageUrl) setSelectedBgUrl(designedConfig.backgroundImageUrl);
+          if (designedConfig.textColor) setSelectedTextColor(designedConfig.textColor);
+          if (designedConfig.fontStyle) setFontFamilyStyle(designedConfig.fontStyle);
+        }}
+      />
     </SafeAreaView>
   );
 }

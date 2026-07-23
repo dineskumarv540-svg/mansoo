@@ -6,7 +6,7 @@ import AnimatedHeart from './AnimatedHeart';
 import { COLORS } from '../theme/colors';
 import { togglePostLikeInFirestore } from '../services/firebaseDb';
 
-export default function PostCard({ post, onOptionsPress, onCommentPress, onSharePress }) {
+export default function PostCard({ post, onLikeClick, onOptionsPress, onCommentPress, onSharePress }) {
   const [isLiked, setIsLiked] = useState(post.isLiked || false);
   const [likesCount, setLikesCount] = useState(post.likesCount || 0);
   const [isSaved, setIsSaved] = useState(post.isSaved || false);
@@ -15,7 +15,11 @@ export default function PostCard({ post, onOptionsPress, onCommentPress, onShare
     const nextState = !isLiked;
     setIsLiked(nextState);
     setLikesCount(prev => (isLiked ? prev - 1 : prev + 1));
-    togglePostLikeInFirestore(post.id, 'u1', nextState);
+    if (onLikeClick) {
+      onLikeClick(post);
+    } else {
+      togglePostLikeInFirestore(post.id, 'u1', nextState);
+    }
   };
 
   const toggleSave = () => {

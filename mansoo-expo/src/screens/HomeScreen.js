@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -6,6 +6,8 @@ import {
   SafeAreaView,
   FlatList,
   TouchableOpacity,
+  RefreshControl,
+  ActivityIndicator,
   Alert
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -15,20 +17,89 @@ import UserSuggestions from '../components/UserSuggestions';
 import PostCard from '../components/PostCard';
 import PostOptionsSheet from '../components/PostOptionsSheet';
 import CommentsModal from '../components/CommentsModal';
-import { DUMMY_POSTS, DUMMY_STORIES, DUMMY_USERS } from '../data/dummyData';
-import { COLORS } from '../theme/colors';
-
 import DailyChallengeCard from '../components/DailyChallengeCard';
 import AdBanner from '../components/AdBanner';
+import { PostCardSkeleton, StoryBarSkeleton } from '../components/SkeletonLoaders';
+
+import { DUMMY_POSTS, DUMMY_STORIES, DUMMY_USERS } from '../data/dummyData';
+import { fetchPostsFeed, togglePostLikeInFirestore } from '../services/firebaseDb';
+import { getCachedFeed, updateCachedFeed, updatePostInCache } from '../services/feedCacheService';
 import { getTodayChallenge } from '../services/challengeService';
+import { COLORS } from '../theme/colors';
 
 export default function HomeScreen({ navigation }) {
+  const [posts, setPosts] = useState(getCachedFeed());
+  const [initialLoading, setInitialLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [lastDoc, setLastDoc] = useState(null);
+  const [hasMore, setHasMore] = useState(true);
+
   const [selectedPost, setSelectedPost] = useState(null);
   const [sheetVisible, setSheetVisible] = useState(false);
   const [commentsVisible, setCommentsVisible] = useState(false);
 
-  const featuredPosts = DUMMY_POSTS.filter(p => p.isFeatured);
+  const featuredPosts = posts.filter(p => p.isFeatured).slice(0, 3);
   const todayChallenge = getTodayChallenge();
+
+  // Initial feed load
+  useEffect(() => {
+    loadInitialFeed();
+  }, []);
+
+  const loadInitialFeed = async () => {
+    if (posts.length === 0) setInitialLoading(true);
+
+    const { posts: newPosts, lastDoc: newLastDoc } = await fetchPostsFeed(null, 6);
+    setPosts(newPosts);
+    updateCachedFeed(newPosts);
+    setLastDoc(newLastDoc);
+    setInitialLoading(false);
+  };
+
+  // Pull to Refresh Handler
+  const handleRefresh = useCallback(async () => {
+    setRefreshing(true);
+    const { posts: newPosts, lastDoc: newLastDoc } = await fetchPostsFeed(null, 6);
+    setPosts(newPosts);
+    updateCachedFeed(newPosts);
+    setLastDoc(newLastDoc);
+    setHasMore(true);
+    setRefreshing(false);
+  }, []);
+
+  // Infinite Scroll Pagination Handler
+  const handleLoadMore = async () => {
+    if (loadingMore || !hasMore || refreshing) return;
+
+    setLoadingMore(true);
+    const { posts: nextPosts, lastDoc: nextLastDoc } = await fetchPostsFeed(lastDoc, 5);
+
+    if (nextPosts.length === 0 || !nextLastDoc) {
+      setHasMore(false);
+    } else {
+      const mergedPosts = [...posts, ...nextPosts];
+      setPosts(mergedPosts);
+      updateCachedFeed(mergedPosts);
+      setLastDoc(nextLastDoc);
+    }
+    setLoadingMore(false);
+  };
+
+  // Optimistic UI Like Handler
+  const handleOptimisticLike = (targetPost) => {
+    const nextLiked = !targetPost.isLiked;
+    const nextCount = targetPost.likesCount + (nextLiked ? 1 : -1);
+
+    const updated = { isLiked: nextLiked, likesCount: nextCount };
+
+    // 1. Instant client-side state update
+    setPosts(prev => prev.map(p => (p.id === targetPost.id ? { ...p, ...updated } : p)));
+    updatePostInCache(targetPost.id, updated);
+
+    // 2. Background Firestore sync
+    togglePostLikeInFirestore(targetPost.id, 'u1', nextLiked);
+  };
 
   const handleOptionsPress = (post) => {
     setSelectedPost(post);
@@ -61,7 +132,7 @@ export default function HomeScreen({ navigation }) {
 
       {/* 3. Featured Section */}
       <FeaturedSection
-        featuredPosts={featuredPosts}
+        featuredPosts={featuredPosts.length > 0 ? featuredPosts : DUMMY_POSTS.slice(0, 3)}
         onPostPress={(post) => Alert.alert('Featured Post', post.quoteText)}
       />
 
@@ -77,6 +148,26 @@ export default function HomeScreen({ navigation }) {
       </View>
     </View>
   );
+
+  const renderFooter = () => {
+    if (!loadingMore) return <View style={{ height: 20 }} />;
+    return (
+      <View style={styles.footerLoader}>
+        <ActivityIndicator color={COLORS.primary} size="small" />
+        <Text style={styles.loadingMoreText}>Loading more posts...</Text>
+      </View>
+    );
+  };
+
+  if (initialLoading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <StoryBarSkeleton />
+        <PostCardSkeleton />
+        <PostCardSkeleton />
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -99,21 +190,33 @@ export default function HomeScreen({ navigation }) {
         </TouchableOpacity>
       </View>
 
-      {/* Main Scrollable Feed */}
+      {/* Main Scrollable Feed with Infinite Scroll & Pull-to-Refresh */}
       <FlatList
-        data={DUMMY_POSTS}
+        data={posts}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
           <PostCard
             post={item}
+            onLikeClick={() => handleOptimisticLike(item)}
             onOptionsPress={handleOptionsPress}
             onCommentPress={handleCommentPress}
             onSharePress={(p) => Alert.alert('Share', `Share post ${p.id}`)}
           />
         )}
         ListHeaderComponent={renderHeader}
+        ListFooterComponent={renderFooter}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.listContent}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+            colors={[COLORS.primary, COLORS.accent]}
+            tintColor={COLORS.primary}
+          />
+        }
+        onEndReached={handleLoadMore}
+        onEndReachedThreshold={0.4}
         initialNumToRender={4}
         maxToRenderPerBatch={6}
         windowSize={5}
@@ -192,5 +295,16 @@ const styles = StyleSheet.create({
   },
   listContent: {
     paddingBottom: 20,
+  },
+  footerLoader: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 16,
+  },
+  loadingMoreText: {
+    fontSize: 12,
+    color: COLORS.textSecondary,
+    marginLeft: 8,
   },
 });

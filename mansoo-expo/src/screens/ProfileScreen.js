@@ -16,6 +16,8 @@ import StaggeredGrid from '../components/StaggeredGrid';
 import EmailVerificationBanner from '../components/EmailVerificationBanner';
 import EditProfileModal from '../components/EditProfileModal';
 import SettingsModal from '../components/SettingsModal';
+import QRCodeModal from '../components/QRCodeModal';
+import ShareSheetModal from '../components/ShareSheetModal';
 
 import { DUMMY_POSTS, DUMMY_USERS } from '../data/dummyData';
 import { COLORS } from '../theme/colors';
@@ -25,6 +27,8 @@ export default function ProfileScreen({ navigation }) {
   const [selectedTab, setSelectedTab] = useState(0); // 0: Posts, 1: Saved, 2: Liked
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [settingsModalVisible, setSettingsModalVisible] = useState(false);
+  const [qrModalVisible, setQrModalVisible] = useState(false);
+  const [shareProfileVisible, setShareProfileVisible] = useState(false);
 
   const { user, logout, deleteAccount } = useAuth();
   const initialUser = user || DUMMY_USERS[0];
@@ -166,7 +170,7 @@ export default function ProfileScreen({ navigation }) {
             </View>
           </View>
 
-          {/* Action Buttons */}
+          {/* Action Buttons Row 1 */}
           <View style={styles.actionsRow}>
             <TouchableOpacity style={styles.editBtn} onPress={() => navigation.navigate('Premium')}>
               <Text style={{ fontSize: 13, marginRight: 2 }}>👑</Text>
@@ -186,6 +190,19 @@ export default function ProfileScreen({ navigation }) {
             <TouchableOpacity style={styles.editBtn} onPress={() => navigation.navigate('Analytics')}>
               <Ionicons name="bar-chart-outline" size={16} color={COLORS.primary} />
               <Text style={[styles.editBtnText, { color: COLORS.primary }]}>Analytics</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Action Buttons Row 2: Share & QR */}
+          <View style={[styles.actionsRow, { marginTop: 0 }]}>
+            <TouchableOpacity style={styles.editBtn} onPress={() => setShareProfileVisible(true)}>
+              <Ionicons name="share-social-outline" size={16} color={COLORS.primary} />
+              <Text style={[styles.editBtnText, { color: COLORS.primary }]}>Share Profile</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.editBtn} onPress={() => setQrModalVisible(true)}>
+              <Ionicons name="qr-code-outline" size={16} color="#E65100" />
+              <Text style={[styles.editBtnText, { color: '#E65100' }]}>My QR Code</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -228,6 +245,20 @@ export default function ProfileScreen({ navigation }) {
         onClose={() => setSettingsModalVisible(false)}
         onLogout={handleLogout}
         onDeleteAccount={handleDeleteAccount}
+      />
+
+      <QRCodeModal
+        visible={qrModalVisible}
+        targetItem={{ id: profileData.handle, name: profileData.name, displayName: profileData.name }}
+        type="profile"
+        onClose={() => setQrModalVisible(false)}
+      />
+
+      <ShareSheetModal
+        visible={shareProfileVisible}
+        targetItem={{ id: profileData.handle, name: profileData.name, authorName: profileData.name }}
+        type="profile"
+        onClose={() => setShareProfileVisible(false)}
       />
     </SafeAreaView>
   );

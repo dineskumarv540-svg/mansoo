@@ -17,6 +17,7 @@ import UserSuggestions from '../components/UserSuggestions';
 import PostCard from '../components/PostCard';
 import PostOptionsSheet from '../components/PostOptionsSheet';
 import CommentsModal from '../components/CommentsModal';
+import ShareSheetModal from '../components/ShareSheetModal';
 import DailyChallengeCard from '../components/DailyChallengeCard';
 import AdBanner from '../components/AdBanner';
 import { PostCardSkeleton, StoryBarSkeleton } from '../components/SkeletonLoaders';
@@ -41,6 +42,8 @@ export default function HomeScreen({ navigation }) {
   const [selectedPost, setSelectedPost] = useState(null);
   const [sheetVisible, setSheetVisible] = useState(false);
   const [commentsVisible, setCommentsVisible] = useState(false);
+  const [shareSheetVisible, setShareSheetVisible] = useState(false);
+  const [shareTargetPost, setShareTargetPost] = useState(null);
 
   const featuredPosts = posts.filter(p => p.isFeatured).slice(0, 3);
   const todayChallenge = getTodayChallenge();
@@ -131,8 +134,9 @@ export default function HomeScreen({ navigation }) {
     if (!selectedPost) return;
 
     if (action === 'Share to Story' || action === 'Copy Link') {
-      await sharePost(selectedPost);
-      Alert.alert('Shared! ✨', `${action} completed.`);
+      setSheetVisible(false);
+      setShareTargetPost(selectedPost);
+      setShareSheetVisible(true);
     } else if (action === 'Block User') {
       Alert.alert(
         'Block User',
@@ -230,13 +234,18 @@ export default function HomeScreen({ navigation }) {
 
   const keyExtractor = useCallback((item) => item.id, []);
 
+  const handleSharePress = (post) => {
+    setShareTargetPost(post);
+    setShareSheetVisible(true);
+  };
+
   const renderPostItem = useCallback(({ item }) => (
     <PostCard
       post={item}
       onLikeClick={handleOptimisticLike}
       onOptionsPress={handleOptionsPress}
       onCommentPress={handleCommentPress}
-      onSharePress={(p) => Alert.alert('Share', `Share post ${p.id}`)}
+      onSharePress={handleSharePress}
     />
   ), []);
 
@@ -309,6 +318,14 @@ export default function HomeScreen({ navigation }) {
         visible={commentsVisible}
         post={selectedPost}
         onClose={() => setCommentsVisible(false)}
+      />
+
+      {/* Professional Share Sheet */}
+      <ShareSheetModal
+        visible={shareSheetVisible}
+        targetItem={shareTargetPost}
+        type="post"
+        onClose={() => setShareSheetVisible(false)}
       />
     </SafeAreaView>
   );

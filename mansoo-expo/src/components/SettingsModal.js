@@ -7,7 +7,8 @@ import {
   TouchableOpacity,
   Switch,
   ScrollView,
-  TouchableWithoutFeedback
+  TouchableWithoutFeedback,
+  Alert
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS } from '../theme/colors';
@@ -61,6 +62,23 @@ export default function SettingsModal({ visible, onClose, onLogout, onDeleteAcco
                     thumbColor={COLORS.primary}
                   />
                 </View>
+
+                {/* Reset Onboarding */}
+                <TouchableOpacity
+                  style={styles.row}
+                  onPress={async () => {
+                    const { resetOnboarding } = require('../services/onboardingService');
+                    await resetOnboarding();
+                    Alert.alert('Onboarding Reset 🚀', 'Tutorial will launch on next app start.');
+                    onClose();
+                  }}
+                >
+                  <View style={styles.rowLeft}>
+                    <Ionicons name="sparkles-outline" size={20} color={COLORS.primary} style={styles.rowIcon} />
+                    <Text style={styles.rowText}>Reset Onboarding Tutorial</Text>
+                  </View>
+                  <Ionicons name="reload" size={16} color={COLORS.primary} />
+                </TouchableOpacity>
 
                 <View style={styles.divider} />
 

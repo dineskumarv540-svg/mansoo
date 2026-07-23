@@ -45,9 +45,15 @@ export default function SplashScreen({ navigation }) {
       }),
     ]).start();
 
-    // Auto navigate after 2.5 seconds
-    const timer = setTimeout(() => {
-      navigation.replace('Login');
+    // Auto navigate after 2.5 seconds based on first launch check
+    const timer = setTimeout(async () => {
+      const { checkIsFirstLaunch } = require('../services/onboardingService');
+      const isFirst = await checkIsFirstLaunch();
+      if (isFirst) {
+        navigation.replace('Onboarding');
+      } else {
+        navigation.replace('Login');
+      }
     }, 2500);
 
     return () => clearTimeout(timer);

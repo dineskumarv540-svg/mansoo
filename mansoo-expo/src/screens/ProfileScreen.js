@@ -168,6 +168,11 @@ export default function ProfileScreen({ navigation }) {
 
           {/* Action Buttons */}
           <View style={styles.actionsRow}>
+            <TouchableOpacity style={styles.editBtn} onPress={() => navigation.navigate('Premium')}>
+              <Text style={{ fontSize: 13, marginRight: 2 }}>👑</Text>
+              <Text style={[styles.editBtnText, { color: '#E65100' }]}>PRO</Text>
+            </TouchableOpacity>
+
             <TouchableOpacity style={styles.editBtn} onPress={() => setEditModalVisible(true)}>
               <Ionicons name="create-outline" size={16} color={COLORS.textPrimary} />
               <Text style={styles.editBtnText}>Edit</Text>
@@ -181,11 +186,6 @@ export default function ProfileScreen({ navigation }) {
             <TouchableOpacity style={styles.editBtn} onPress={() => navigation.navigate('Analytics')}>
               <Ionicons name="bar-chart-outline" size={16} color={COLORS.primary} />
               <Text style={[styles.editBtnText, { color: COLORS.primary }]}>Analytics</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity style={styles.settingsActionBtn} onPress={() => setSettingsModalVisible(true)}>
-              <Ionicons name="settings-outline" size={16} color={COLORS.textPrimary} />
-              <Text style={styles.editBtnText}>Settings</Text>
             </TouchableOpacity>
           </View>
         </View>

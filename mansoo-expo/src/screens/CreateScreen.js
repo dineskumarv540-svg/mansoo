@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -8,11 +8,19 @@ import {
   ScrollView,
   TouchableOpacity,
   Image,
-  Alert
+  Alert,
+  ActivityIndicator
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
+import * as ImagePicker from 'expo-image-picker';
+
+import MentionHashtagSuggestions from '../components/MentionHashtagSuggestions';
 import { COLORS } from '../theme/colors';
+import { moderateText } from '../services/moderationService';
+import { createPostInFirestore, updatePostInFirestore } from '../services/firebaseDb';
+import { saveDraftLocally, loadDraftLocally } from '../services/draftService';
+import { adMobManager } from '../services/admobService';
 
 const BG_IMAGES = [
   'https://images.unsplash.com/photo-1518837695005-2083093ee35b?w=800',
@@ -20,6 +28,8 @@ const BG_IMAGES = [
   'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=800',
   'https://images.unsplash.com/photo-1519681393784-d120267933ba?w=800',
   'https://images.unsplash.com/photo-1531685250784-756995259377?w=800',
+  'https://images.unsplash.com/photo-1499750310107-5fef28a66643?w=800',
+  'https://images.unsplash.com/photo-1472214103451-9374bd1c798e?w=800',
 ];
 
 const SOLID_COLORS = [
@@ -28,27 +38,87 @@ const SOLID_COLORS = [
 
 const TEXT_COLORS = ['#FFFFFF', '#000000', '#FFD54F', '#81D4FA', '#F48FB1', '#A5D6A7'];
 
-import { moderateText } from '../services/moderationService';
-import { createPostInFirestore } from '../services/firebaseDb';
-import { adMobManager } from '../services/admobService';
+export default function CreateScreen({ navigation, route }) {
+  const editingPost = route?.params?.editPost || null;
 
-export default function CreateScreen({ navigation }) {
-  const [quoteText, setQuoteText] = useState('');
+  const [quoteText, setQuoteText] = useState(editingPost ? editingPost.quoteText : '');
   const [isBold, setIsBold] = useState(false);
-  const [isItalic, setIsItalic] = useState(false);
+  const [isItalic, setIsItalic] = useState(editingPost?.fontStyle === 'Cursive');
+  const [fontFamilyStyle, setFontFamilyStyle] = useState(editingPost?.fontStyle || 'Serif');
   const [textAlign, setTextAlign] = useState('center');
-  const [bgTab, setBgTab] = useState(0); // 0: Image, 1: Color
-  const [selectedBgUrl, setSelectedBgUrl] = useState(BG_IMAGES[0]);
+  const [bgTab, setBgTab] = useState(0); // 0: Preset Image, 1: Solid Color, 2: Custom Upload
+  const [selectedBgUrl, setSelectedBgUrl] = useState(editingPost?.backgroundImageUrl || BG_IMAGES[0]);
+  const [customImageUri, setCustomImageUri] = useState(null);
   const [selectedBgColor, setSelectedBgColor] = useState(SOLID_COLORS[0]);
-  const [selectedTextColor, setSelectedTextColor] = useState('#FFFFFF');
-  const [selectedCategory, setSelectedCategory] = useState('Quotes');
+  const [selectedTextColor, setSelectedTextColor] = useState(editingPost?.textColor || '#FFFFFF');
+  const [selectedCategory, setSelectedCategory] = useState(editingPost?.category || 'Quotes');
 
-  const categories = ['Poem', 'Shayari', 'Quotes', 'Story', 'Life', 'Meme'];
+  const [autosaveTime, setAutosaveTime] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const categories = ['Poem', 'Shayari', 'Quotes', 'Story', 'Life', 'Meme', 'Jokes'];
+  const fontOptions = ['Serif', 'Sans', 'Monospace', 'Cursive'];
+
+  // Load existing draft if creating a new post
+  useEffect(() => {
+    if (!editingPost) {
+      const savedDraft = loadDraftLocally();
+      if (savedDraft && savedDraft.quoteText) {
+        setQuoteText(savedDraft.quoteText);
+        if (savedDraft.selectedCategory) setSelectedCategory(savedDraft.selectedCategory);
+      }
+    }
+  }, []);
+
+  // Autosave timer (saves every 5 seconds if text changes)
+  useEffect(() => {
+    if (!quoteText.trim() || editingPost) return;
+
+    const timer = setTimeout(() => {
+      const res = saveDraftLocally({
+        quoteText,
+        selectedCategory,
+        selectedBgUrl,
+        selectedTextColor,
+      });
+      setAutosaveTime(res.savedAt);
+    }, 5000);
+
+    return () => clearTimeout(timer);
+  }, [quoteText, selectedCategory, selectedBgUrl, selectedTextColor]);
 
   const cycleAlign = () => {
     if (textAlign === 'center') setTextAlign('left');
     else if (textAlign === 'left') setTextAlign('right');
     else setTextAlign('center');
+  };
+
+  // Image Upload Handler
+  const handlePickCustomImage = async () => {
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+      });
+
+      if (!result.canceled && result.assets && result.assets[0]) {
+        setCustomImageUri(result.assets[0].uri);
+        setSelectedBgUrl(result.assets[0].uri);
+        setBgTab(2);
+      }
+    } catch (error) {
+      Alert.alert('Image Picker', 'Could not select image from gallery.');
+    }
+  };
+
+  // Autocomplete Insertion Handler
+  const handleSelectAutocomplete = (selectedItem) => {
+    const words = quoteText.split(/\s+/);
+    words.pop();
+    const updatedText = [...words, selectedItem].join(' ') + ' ';
+    setQuoteText(updatedText);
   };
 
   const handlePublish = async () => {
@@ -64,8 +134,9 @@ export default function CreateScreen({ navigation }) {
       return;
     }
 
-    // 2. Firestore Post Creation
-    await createPostInFirestore({
+    setIsSubmitting(true);
+
+    const postPayload = {
       authorId: 'u1',
       authorName: 'Aarav Sharma',
       authorHandle: '@aarav_writes',
@@ -73,15 +144,22 @@ export default function CreateScreen({ navigation }) {
       isVerified: true,
       quoteText: quoteText.trim(),
       category: selectedCategory,
-      backgroundImageUrl: bgTab === 0 ? selectedBgUrl : '',
-      fontStyle: isItalic ? 'Cursive' : 'Serif',
+      backgroundImageUrl: bgTab === 1 ? '' : (customImageUri || selectedBgUrl),
+      backgroundColor: bgTab === 1 ? selectedBgColor : '',
+      fontStyle: fontFamilyStyle,
       textColor: selectedTextColor,
-    });
+    };
 
-    // 3. Trigger Interstitial AdMob Ad
-    adMobManager.showInterstitialOnPost();
+    if (editingPost) {
+      await updatePostInFirestore(editingPost.id, postPayload);
+      Alert.alert('Post Updated! ✨', 'Your changes have been saved.');
+    } else {
+      await createPostInFirestore(postPayload);
+      adMobManager.showInterstitialOnPost();
+      Alert.alert('Post Published! ✨', 'Your quote has been published to the Mansoo feed.');
+    }
 
-    Alert.alert('Post Published! ✨', 'Your quote has been published to the Mansoo feed.');
+    setIsSubmitting(false);
     navigation.navigate('Home');
   };
 
@@ -92,11 +170,24 @@ export default function CreateScreen({ navigation }) {
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Ionicons name="arrow-back" size={24} color={COLORS.textPrimary} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Create Post</Text>
-        <TouchableOpacity onPress={handlePublish} style={styles.postBtnContainer}>
+
+        <View style={styles.titleContainer}>
+          <Text style={styles.headerTitle}>{editingPost ? 'Edit Post' : 'Create Post'}</Text>
+          {autosaveTime ? (
+            <Text style={styles.autosaveText}>Autosaved {autosaveTime}</Text>
+          ) : null}
+        </View>
+
+        <TouchableOpacity onPress={handlePublish} disabled={isSubmitting} style={styles.postBtnContainer}>
           <LinearGradient colors={COLORS.gradientPink} style={styles.postBtn}>
-            <Ionicons name="send" size={14} color="#FFFFFF" />
-            <Text style={styles.postBtnText}>Post</Text>
+            {isSubmitting ? (
+              <ActivityIndicator color="#FFFFFF" size="small" />
+            ) : (
+              <>
+                <Ionicons name={editingPost ? "checkmark" : "send"} size={14} color="#FFFFFF" />
+                <Text style={styles.postBtnText}>{editingPost ? 'Save' : 'Post'}</Text>
+              </>
+            )}
           </LinearGradient>
         </TouchableOpacity>
       </View>
@@ -104,14 +195,14 @@ export default function CreateScreen({ navigation }) {
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         {/* 1. Live Canvas Preview */}
         <View style={styles.canvasCard}>
-          {bgTab === 0 ? (
-            <Image source={{ uri: selectedBgUrl }} style={styles.canvasBgImage} />
-          ) : (
+          {bgTab === 1 ? (
             <View style={[styles.canvasBgColor, { backgroundColor: selectedBgColor }]} />
+          ) : (
+            <Image source={{ uri: customImageUri || selectedBgUrl }} style={styles.canvasBgImage} />
           )}
 
           <LinearGradient
-            colors={bgTab === 0 ? ['rgba(0,0,0,0.2)', 'rgba(0,0,0,0.65)'] : ['transparent', 'transparent']}
+            colors={bgTab === 1 ? ['transparent', 'transparent'] : ['rgba(0,0,0,0.2)', 'rgba(0,0,0,0.65)']}
             style={styles.canvasOverlay}
           >
             <Text
@@ -134,7 +225,7 @@ export default function CreateScreen({ navigation }) {
 
         {/* 2. Text Formatting Toolbar */}
         <View style={styles.editorCard}>
-          <Text style={styles.cardSectionTitle}>✍️ Write & Format</Text>
+          <Text style={styles.cardSectionTitle}>✍️ Rich Text & Typography</Text>
 
           <View style={styles.toolbar}>
             <TouchableOpacity
@@ -163,15 +254,34 @@ export default function CreateScreen({ navigation }) {
             </TouchableOpacity>
           </View>
 
+          {/* Font Family Selector */}
+          <Text style={styles.subLabel}>Font Style:</Text>
+          <View style={styles.fontFamilyRow}>
+            {fontOptions.map(font => (
+              <TouchableOpacity
+                key={font}
+                style={[styles.fontChip, fontFamilyStyle === font && styles.fontChipActive]}
+                onPress={() => setFontFamilyStyle(font)}
+              >
+                <Text style={[styles.fontChipText, fontFamilyStyle === font && styles.fontChipTextActive]}>
+                  {font}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
           {/* Text Input */}
           <TextInput
             style={styles.textInput}
-            placeholder="Write your Shayari, Poem, Quote or Story..."
+            placeholder="Write your Shayari, Poem, Quote... Use #tags and @mentions"
             placeholderTextColor="#AAAAAA"
             multiline
             value={quoteText}
             onChangeText={setQuoteText}
           />
+
+          {/* Hashtag & Mention Autocomplete Popup */}
+          <MentionHashtagSuggestions text={quoteText} onSelect={handleSelectAutocomplete} />
 
           {/* Text Color Picker */}
           <Text style={styles.subLabel}>Text Color:</Text>
@@ -190,17 +300,17 @@ export default function CreateScreen({ navigation }) {
           </View>
         </View>
 
-        {/* 3. Background Theme Picker */}
+        {/* 3. Background Theme & Image Upload */}
         <View style={styles.editorCard}>
-          <Text style={styles.cardSectionTitle}>🖼️ Background Theme</Text>
+          <Text style={styles.cardSectionTitle}>🖼️ Background & Gallery Upload</Text>
 
-          {/* Image / Color Tabs */}
+          {/* Tabs */}
           <View style={styles.bgTabRow}>
             <TouchableOpacity
               style={[styles.bgTab, bgTab === 0 && styles.bgTabActive]}
               onPress={() => setBgTab(0)}
             >
-              <Text style={[styles.bgTabText, bgTab === 0 && styles.bgTabTextActive]}>🌅 Image</Text>
+              <Text style={[styles.bgTabText, bgTab === 0 && styles.bgTabTextActive]}>🌅 Presets</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.bgTab, bgTab === 1 && styles.bgTabActive]}
@@ -208,21 +318,29 @@ export default function CreateScreen({ navigation }) {
             >
               <Text style={[styles.bgTabText, bgTab === 1 && styles.bgTabTextActive]}>🎨 Color</Text>
             </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.bgTab, bgTab === 2 && styles.bgTabActive]}
+              onPress={handlePickCustomImage}
+            >
+              <Text style={[styles.bgTabText, bgTab === 2 && styles.bgTabTextActive]}>📸 Upload</Text>
+            </TouchableOpacity>
           </View>
 
-          {bgTab === 0 ? (
+          {bgTab === 0 && (
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.bgOptionScroll}>
               {BG_IMAGES.map((url, idx) => (
                 <TouchableOpacity
                   key={idx}
                   style={[styles.bgThumbnail, selectedBgUrl === url && styles.bgThumbnailSelected]}
-                  onPress={() => setSelectedBgUrl(url)}
+                  onPress={() => { setSelectedBgUrl(url); setCustomImageUri(null); }}
                 >
                   <Image source={{ uri: url }} style={styles.bgThumbImage} />
                 </TouchableOpacity>
               ))}
             </ScrollView>
-          ) : (
+          )}
+
+          {bgTab === 1 && (
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.bgOptionScroll}>
               {SOLID_COLORS.map((color, idx) => (
                 <TouchableOpacity
@@ -236,6 +354,15 @@ export default function CreateScreen({ navigation }) {
                 />
               ))}
             </ScrollView>
+          )}
+
+          {bgTab === 2 && (
+            <TouchableOpacity style={styles.uploadBox} onPress={handlePickCustomImage}>
+              <Ionicons name="cloud-upload-outline" size={26} color={COLORS.primary} />
+              <Text style={styles.uploadText}>
+                {customImageUri ? 'Change Gallery Image' : 'Select Image from Phone Gallery'}
+              </Text>
+            </TouchableOpacity>
           )}
         </View>
 
@@ -258,20 +385,23 @@ export default function CreateScreen({ navigation }) {
           </ScrollView>
         </View>
 
-        {/* Bottom Buttons */}
+        {/* Bottom Actions */}
         <View style={styles.bottomButtonsRow}>
           <TouchableOpacity
             style={styles.draftBtn}
-            onPress={() => Alert.alert('Saved to Drafts', 'Your draft has been saved locally.')}
+            onPress={() => {
+              saveDraftLocally({ quoteText, selectedCategory, selectedBgUrl, selectedTextColor });
+              Alert.alert('Draft Saved 💾', 'Your post draft has been saved.');
+            }}
           >
             <Ionicons name="save-outline" size={18} color={COLORS.textSecondary} />
             <Text style={styles.draftBtnText}>Save Draft</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.publishBtnContainer} onPress={handlePublish}>
+          <TouchableOpacity style={styles.publishBtnContainer} onPress={handlePublish} disabled={isSubmitting}>
             <LinearGradient colors={COLORS.gradientGreen} style={styles.publishBtn}>
-              <Ionicons name="paper-plane" size={18} color="#FFFFFF" />
-              <Text style={styles.publishBtnText}>Post Now</Text>
+              <Ionicons name={editingPost ? "checkmark-circle" : "paper-plane"} size={18} color="#FFFFFF" />
+              <Text style={styles.publishBtnText}>{editingPost ? 'Save Edits' : 'Post Now'}</Text>
             </LinearGradient>
           </TouchableOpacity>
         </View>
@@ -295,11 +425,19 @@ const styles = StyleSheet.create({
     borderBottomColor: '#F0F0F0',
     backgroundColor: '#FFFFFF',
   },
+  titleContainer: {
+    alignItems: 'center',
+  },
   headerTitle: {
     fontSize: 18,
     fontWeight: 'bold',
     color: COLORS.primary,
     fontFamily: 'serif',
+  },
+  autosaveText: {
+    fontSize: 10,
+    color: COLORS.primaryLight,
+    fontWeight: '600',
   },
   postBtnContainer: {
     borderRadius: 16,
@@ -381,6 +519,28 @@ const styles = StyleSheet.create({
   },
   toolBtnActive: {
     backgroundColor: '#FFFFFF',
+  },
+  fontFamilyRow: {
+    flexDirection: 'row',
+    marginBottom: 10,
+  },
+  fontChip: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+    backgroundColor: '#F0F0F0',
+    marginRight: 8,
+  },
+  fontChipActive: {
+    backgroundColor: COLORS.primary,
+  },
+  fontChipText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: COLORS.textSecondary,
+  },
+  fontChipTextActive: {
+    color: '#FFFFFF',
   },
   textInput: {
     backgroundColor: '#FFFFFF',
@@ -468,6 +628,23 @@ const styles = StyleSheet.create({
   },
   colorCircleSelected: {
     borderColor: COLORS.accent,
+  },
+  uploadBox: {
+    borderWidth: 1.5,
+    borderColor: COLORS.primary,
+    borderStyle: 'dashed',
+    borderRadius: 14,
+    paddingVertical: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#F0F7F7',
+    marginTop: 4,
+  },
+  uploadText: {
+    fontSize: 13,
+    fontWeight: 'bold',
+    color: COLORS.primary,
+    marginTop: 6,
   },
   categoryScroll: {
     marginTop: 4,

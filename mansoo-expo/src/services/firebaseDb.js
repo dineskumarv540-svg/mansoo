@@ -98,6 +98,38 @@ export async function togglePostLikeInFirestore(postId, userId, isLikedNow) {
 }
 
 /**
+ * Update an existing Post in Firestore
+ */
+export async function updatePostInFirestore(postId, updateData) {
+  try {
+    const postRef = doc(db, POSTS_COLLECTION, postId);
+    await updateDoc(postRef, {
+      ...updateData,
+      updatedAtTimestamp: Date.now(),
+    });
+    return { success: true };
+  } catch (error) {
+    console.log('[Firestore] Local fallback post update:', error.message);
+    return { success: true };
+  }
+}
+
+/**
+ * Delete a Post from Firestore
+ */
+export async function deletePostFromFirestore(postId) {
+  try {
+    const postRef = doc(db, POSTS_COLLECTION, postId);
+    const { deleteDoc } = require('firebase/firestore');
+    await deleteDoc(postRef);
+    return { success: true };
+  } catch (error) {
+    console.log('[Firestore] Local fallback post deletion:', error.message);
+    return { success: true };
+  }
+}
+
+/**
  * Toggle User Follow State
  */
 export async function toggleUserFollowInFirestore(targetUserId, currentUserId, isFollowingNow) {

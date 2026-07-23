@@ -112,7 +112,30 @@ export default function HomeScreen({ navigation }) {
   };
 
   const handleOptionSelect = (action) => {
-    Alert.alert('Action Selected', action);
+    if (action === 'Edit Post' && selectedPost) {
+      navigation.navigate('Create', { editPost: selectedPost });
+    } else if (action === 'Delete Post' && selectedPost) {
+      Alert.alert(
+        'Delete Post',
+        'Are you sure you want to permanently delete this post?',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Delete',
+            style: 'destructive',
+            onPress: async () => {
+              const targetId = selectedPost.id;
+              setPosts(prev => prev.filter(p => p.id !== targetId));
+              const { deletePostFromFirestore } = require('../services/firebaseDb');
+              await deletePostFromFirestore(targetId);
+              Alert.alert('Post Deleted', 'Your post has been removed.');
+            }
+          }
+        ]
+      );
+    } else {
+      Alert.alert('Action Selected', action);
+    }
   };
 
   const renderHeader = () => (

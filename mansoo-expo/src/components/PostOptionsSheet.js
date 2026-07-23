@@ -111,19 +111,32 @@ export default function PostOptionsSheet({ visible, post, onClose, onOptionSelec
                 </View>
               </TouchableOpacity>
 
+              <TouchableOpacity
+                style={styles.optionRow}
+                onPress={() => handleOption('Edit Post')}
+              >
+                <View style={[styles.iconBox, { backgroundColor: '#E3F2FD' }]}>
+                  <Ionicons name="create-outline" size={20} color="#2196F3" />
+                </View>
+                <View style={styles.optionTextContainer}>
+                  <Text style={styles.optionLabel}>Edit Post</Text>
+                  <Text style={styles.optionSublabel}>Modify quote text, style or background</Text>
+                </View>
+              </TouchableOpacity>
+
               {/* Danger Zone Divider */}
               <View style={styles.divider} />
 
               <TouchableOpacity
                 style={styles.optionRow}
-                onPress={() => handleOption('Report Post')}
+                onPress={() => handleOption('Delete Post')}
               >
                 <View style={[styles.iconBox, { backgroundColor: '#FFEBEE' }]}>
-                  <Ionicons name="alert-circle-outline" size={20} color={COLORS.error} />
+                  <Ionicons name="trash-outline" size={20} color={COLORS.error} />
                 </View>
                 <View style={styles.optionTextContainer}>
-                  <Text style={[styles.optionLabel, { color: COLORS.error }]}>Report Post</Text>
-                  <Text style={[styles.optionSublabel, { color: COLORS.error }]}>Flag inappropriate content</Text>
+                  <Text style={[styles.optionLabel, { color: COLORS.error }]}>Delete Post</Text>
+                  <Text style={[styles.optionSublabel, { color: COLORS.error }]}>Permanently remove this post</Text>
                 </View>
               </TouchableOpacity>
 

@@ -170,7 +170,12 @@ export default function ProfileScreen({ navigation }) {
           <View style={styles.actionsRow}>
             <TouchableOpacity style={styles.editBtn} onPress={() => setEditModalVisible(true)}>
               <Ionicons name="create-outline" size={16} color={COLORS.textPrimary} />
-              <Text style={styles.editBtnText}>Edit Profile</Text>
+              <Text style={styles.editBtnText}>Edit</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.editBtn} onPress={() => navigation.navigate('Analytics')}>
+              <Ionicons name="bar-chart-outline" size={16} color={COLORS.primary} />
+              <Text style={[styles.editBtnText, { color: COLORS.primary }]}>Analytics</Text>
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.settingsActionBtn} onPress={() => setSettingsModalVisible(true)}>
